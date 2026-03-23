@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P&I Trucking | Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#1e2a3a;--navy2:#253447;--gold:#c9a84c;--gold-light:#e8d090;--gold-pale:#faf4e1;
+      --bg:#f0f4f8;--white:#fff;--border:#dce3ed;--text:#2d3748;--muted:#718096;
+      --green:#2d6a4f;--green-light:#edf7f2;--red:#c0392b;--red-light:#fff0f0;
+      --blue:#2563eb;--blue-light:#eff6ff;--orange:#d97706;--orange-light:#fffbeb;
+    }
+    body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;overflow:hidden}
+
+    /* LOGIN */
+    #loginScreen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:999}
+    #loginScreen.hide{display:none}
+    .login-box{background:#fff;border-radius:8px;padding:2.5rem;width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+    .login-logo{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:700;color:var(--navy);margin-bottom:0.2rem}
+    .login-logo span{color:var(--gold)}
+    .login-sub{font-size:12px;color:var(--muted);margin-bottom:1.8rem;text-transform:uppercase;letter-spacing:0.1em}
+    .lf-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:0.3rem;margin-top:0.9rem}
+    .lf-input{width:100%;padding:0.65rem 0.9rem;border:1.5px solid var(--border);border-radius:4px;font-family:Arial,sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+    .lf-input:focus{border-color:var(--navy)}
+    .lf-input.err{border-color:var(--red);background:var(--red-light)}
+    .lf-error{font-size:12px;color:var(--red);margin-top:0.5rem;display:none}
+    .lf-error.show{display:block}
+    .login-btn{width:100%;margin-top:1.4rem;padding:0.75rem;background:var(--navy);color:var(--gold);border:none;border-radius:4px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.2s}
+    .login-btn:hover{background:#253447}
+    .login-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:1rem}
+
+    /* APP */
+    #app{display:none;height:100vh;overflow:hidden}
+    #app.show{display:flex!important;flex-direction:row}
+
+    /* SIDEBAR */
+    .sidebar{width:220px;background:var(--navy);display:flex;flex-direction:column;height:100vh;flex-shrink:0;overflow-y:auto}
+    .sidebar-logo{padding:1.4rem 1.2rem 1rem;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .sb-logo-main{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:#fff}
+    .sb-logo-main span{color:var(--gold)}
+    .sb-logo-sub{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-top:2px}
+    .sidebar-nav{padding:0.8rem 0;flex:1}
+    .nav-item{display:flex;align-items:center;gap:0.7rem;padding:0.7rem 1.1rem;margin:0 0.5rem;border-radius:5px;cursor:pointer;color:rgba(255,255,255,0.6);font-size:14px;font-family:Arial,sans-serif;transition:all 0.15s;user-select:none}
+    .nav-item:hover{background:rgba(255,255,255,0.08);color:#fff}
+    .nav-item.active{background:rgba(201,168,76,0.2);color:#e8d090;font-weight:600}
+    .nav-icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0}
+    .nav-badge{margin-left:auto;background:var(--gold);color:var(--navy);font-size:11px;font-weight:700;padding:0.1rem 0.45rem;border-radius:10px;min-width:18px;text-align:center}
+    .logout-btn{margin:1rem;padding:0.65rem;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:5px;color:rgba(255,255,255,0.5);font-family:Arial,sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s;text-align:center}
+    .logout-btn:hover{background:rgba(192,57,43,0.3);color:#fff}
+
+    /* MAIN */
+    .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+    .topbar{background:#fff;border-bottom:1px solid var(--border);height:54px;padding:0 1.4rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .tb-title{font-size:16px;font-weight:700;color:var(--text)}
+    .tb-right{display:flex;gap:0.6rem;align-items:center}
+    .tb-refresh{background:none;border:1px solid var(--border);border-radius:4px;width:30px;height:30px;cursor:pointer;font-size:1rem;color:var(--muted);transition:all 0.15s}
+    .tb-refresh:hover{border-color:var(--navy);color:var(--navy)}
+    .tb-time{font-size:13px;color:var(--muted)}
+    .content{flex:1;overflow-y:auto;padding:1.4rem}
+
+    /* PANELS */
+    .panel{display:none}
+    .panel.active{display:block;animation:fadeUp 0.2s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* CARDS */
+    .card{background:#fff;border:1px solid var(--border);border-radius:6px;margin-bottom:1rem}
+    .card-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem;border-bottom:1px solid var(--border)}
+    .card-title{font-size:14px;font-weight:700;color:var(--text)}
+    .card-action{background:none;border:none;font-size:12px;color:var(--blue);cursor:pointer;font-family:Arial,sans-serif}
+    .card-body{padding:1.2rem}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.2rem}
+    .stat-card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:1.2rem;cursor:pointer;transition:box-shadow 0.2s}
+    .stat-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+    .stat-card.urgent{border-left:3px solid var(--red)}
+    .stat-card.warn{border-left:3px solid var(--orange)}
+    .stat-top{display:flex;align-items:flex-start;justify-content:space-between}
+    .stat-icon{font-size:1.4rem}
+    .stat-num{font-size:1.8rem;font-weight:700;color:var(--text);line-height:1}
+    .stat-lbl{font-size:12px;color:var(--muted);margin-top:0.3rem}
+    .stat-trend{font-size:11px;color:var(--muted);margin-top:0.5rem}
+
+    /* TABLES */
+    .tbl-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th{background:var(--bg);padding:0.6rem 0.9rem;text-align:left;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+    td{padding:0.65rem 0.9rem;border-bottom:1px solid var(--border);color:var(--text)}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--bg)}
+    .t-ref{font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-light);padding:0.15rem 0.5rem;border-radius:3px}
+    .t-name{font-weight:600;font-size:14px}
+    .t-sub{font-size:12px;color:var(--muted)}
+    .empty-state{text-align:center;padding:3rem;color:var(--muted);font-size:14px}
+    .loading{text-align:center;padding:2rem;color:var(--muted)}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin 0.6s linear infinite;margin-right:0.5rem;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* BADGES */
+    .badge{display:inline-flex;align-items:center;padding:0.2rem 0.6rem;border-radius:3px;font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase}
+    .b-active{background:var(--green-light);color:var(--green)}
+    .b-inactive{background:var(--red-light);color:var(--red)}
+    .b-pending{background:var(--orange-light);color:var(--orange)}
+    .b-done{background:var(--green-light);color:var(--green)}
+    .b-overdue{background:var(--red-light);color:var(--red)}
+    .b-driver{background:#eff6ff;color:#2563eb}
+    .b-sideman{background:#f5f0ff;color:#7c3aed}
+    .b-office{background:var(--gold-pale);color:#92702a}
+
+    /* FILTER BAR */
+    .filter-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+    .filter-tabs{display:flex;gap:0.4rem;flex-wrap:wrap}
+    .ftab{background:#fff;border:1.5px solid var(--border);border-radius:4px;padding:0.38rem 0.75rem;font-family:Arial,sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s}
+    .ftab:hover{border-color:var(--navy);color:var(--navy)}
+    .ftab.active{background:var(--navy);border-color:var(--navy);color:var(--gold)}
+    .ftab-count{font-size:11px;font-weight:700;padding:0.05rem 0.3rem;border-radius:10px;background:rgba(0,0,0,0.08);margin-left:4px}
+    .ftab.active .ftab-count{background:rgba(201,168,76,0.25)}
+    .search-input{padding:0.5rem 0.8rem;border:1.5px solid var(--border);border-radius:4px;font-family:Arial,sans-serif;font-size:13px;outline:none;width:220px;transition:border-color 0.2s}
+    .search-input:focus{border-color:var(--navy)}
+
+    /* BUTTONS */
+    .btn-primary{background:var(--navy);color:var(--gold);border:none;border-radius:5px;padding:0.6rem 1.2rem;font-family:Arial,sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.06em}
+    .btn-primary:hover{background:var(--navy2)}
+    .btn-outline{background:none;border:1.5px solid var(--border);border-radius:5px;padding:0.55rem 1rem;font-family:Arial,sans-serif;font-size:13px;color:var(--text);cursor:pointer;transition:all 0.15s}
+    .btn-outline:hover{border-color:var(--navy)}
+    .btn-danger{background:var(--red);color:#fff;border:none;border-radius:5px;padding:0.55rem 1rem;font-family:Arial,sans-serif;font-size:13px;cursor:pointer}
+    .btn-sm{padding:0.28rem 0.65rem;font-size:12px;border:1.5px solid var(--border);border-radius:3px;background:none;cursor:pointer;font-family:Arial,sans-serif;color:var(--text);transition:all 0.15s}
+    .btn-sm:hover{border-color:var(--navy)}
+    .btn-sm.blue{border-color:var(--blue);color:var(--blue)}
+    .btn-sm.red{border-color:var(--red);color:var(--red)}
+    .btn-sm.green{border-color:var(--green);color:var(--green)}
+
+    /* DRAWER */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s}
+    .overlay.open{opacity:1;pointer-events:all}
+    .drawer{position:fixed;top:0;right:-480px;width:460px;height:100vh;background:#fff;z-index:201;box-shadow:-4px 0 30px rgba(0,0,0,0.15);transition:right 0.25s ease;display:flex;flex-direction:column}
+    .drawer.open{right:0}
+    .drw-head{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--navy)}
+    .drw-title{font-size:15px;font-weight:700;color:#fff}
+    .drw-ref{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px}
+    .drw-close{background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.2rem;cursor:pointer;padding:0.2rem 0.4rem;transition:color 0.15s}
+    .drw-close:hover{color:#fff}
+    .drw-body{padding:1.4rem;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:0}
+    .drw-section{margin-bottom:1.2rem}
+    .drw-sec-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)}
+    .drw-row{display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border)}
+    .drw-row:last-child{border-bottom:none}
+    .drw-lbl{font-size:12px;color:var(--muted)}
+    .drw-val{font-size:13px;font-weight:500;color:var(--text);text-align:right;max-width:60%}
+    .drw-note{background:var(--gold-pale);border:1px solid var(--gold-light);border-radius:4px;padding:0.75rem 1rem;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:1rem}
+    .drw-btn{width:100%;padding:0.68rem;border-radius:4px;font-family:Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;border:none;display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.5rem}
+    .drw-btn.dark{background:var(--navy);color:var(--gold)}
+    .drw-btn.dark:hover{background:var(--navy2)}
+    .drw-btn.green{background:var(--green);color:#fff}
+    .drw-btn.red{background:var(--red);color:#fff}
+    .drw-btn.outline{background:none;border:1.5px solid var(--border);color:var(--text)}
+    .drw-st-select{width:100%;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:4px;font-family:Arial,sans-serif;font-size:13px;margin-bottom:0.6rem;outline:none}
+
+    /* FORMS */
+    .field-group{display:flex;flex-direction:column;gap:0.3rem;margin-bottom:0.8rem}
+    .field-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text)}
+    .field-input{padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:4px;font-family:Arial,sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;width:100%}
+    .field-input:focus{border-color:var(--navy)}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem}
+    .sf{display:flex;flex-direction:column;gap:0.3rem;margin-bottom:0.8rem}
+    .sf label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text)}
+    .sf input,.sf select,.sf textarea{padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:4px;font-family:Arial,sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;width:100%}
+    .sf input:focus,.sf select:focus,.sf textarea:focus{border-color:var(--navy)}
+    .sf-row{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem}
+
+    /* STATUS SELECT */
+    .st-select{padding:0.3rem 0.5rem;border:1.5px solid var(--border);border-radius:3px;font-family:Arial,sans-serif;font-size:12px;outline:none;background:#fff;cursor:pointer}
+
+    /* OVERVIEW PIPELINE */
+    .pipeline{display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:0.5rem}
+    .pipe{display:flex;flex-direction:column;align-items:center;min-width:90px}
+    .pipe-top{display:flex;align-items:center;gap:0.3rem;margin-bottom:0.4rem}
+    .pipe-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .pipe-lbl{font-size:11px;color:var(--muted)}
+    .pipe-num{font-size:1.4rem;font-weight:700;line-height:1}
+    .pipe-bar-wrap{width:100%;height:4px;background:var(--border);border-radius:2px;margin-top:0.3rem}
+    .pipe-bar{height:100%;border-radius:2px;transition:width 0.4s}
+    .pipe-arrow{color:var(--muted);font-size:1rem;margin:0 0.2rem;padding-bottom:0.8rem}
+
+    /* ALERT BANNER */
+    .alert-banner{border-radius:6px;padding:0.9rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.8rem;font-size:13px}
+    .alert-banner.warn{background:var(--orange-light);border:1px solid #fcd34d;color:var(--orange)}
+    .alert-banner.error{background:var(--red-light);border:1px solid #fca5a5;color:var(--red)}
+    .alert-banner.info{background:var(--blue-light);border:1px solid #93c5fd;color:var(--blue)}
+
+    /* GRID LAYOUTS */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+    .workers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
+    .worker-card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:1.2rem}
+    .worker-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:#fff;padding:0.8rem 1.4rem;border-radius:6px;font-size:13px;font-weight:500;z-index:999;transform:translateY(100px);opacity:0;transition:all 0.3s;max-width:320px}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.error{background:var(--red)}
+    .toast.success{background:var(--green)}
+
+    /* PAYSLIP UPLOAD */
+    .upload-area{border:2px dashed var(--border);border-radius:8px;padding:2.5rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg)}
+    .upload-area:hover{border-color:var(--navy);background:#e8eef5}
+    .upload-area.dragover{border-color:var(--gold);background:var(--gold-pale)}
+    .upload-icon{font-size:2.5rem;margin-bottom:0.8rem}
+    .upload-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:0.3rem}
+    .upload-sub{font-size:12px;color:var(--muted)}
+
+    /* PROGRESS */
+    .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:0.5rem 0}
+    .progress-fill{height:100%;border-radius:3px;transition:width 0.4s}
+
+    /* FLEET CARD */
+    .fleet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+    .fleet-card{background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+    .fleet-card-head{background:var(--navy);padding:1rem 1.2rem;display:flex;align-items:center;justify-content:space-between}
+    .fleet-card-body{padding:1.2rem}
+    .fleet-truck-id{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:#fff}
+    .fleet-plate{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px}
+    .maint-item{display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0;border-bottom:1px solid var(--border);font-size:13px}
+    .maint-item:last-child{border-bottom:none}
+    .maint-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:0.5rem}
+
+    /* FINANCIALS */
+    .fin-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1.2rem}
+    .fin-tab{padding:0.7rem 1.2rem;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s}
+    .fin-tab.active{color:var(--navy);border-bottom-color:var(--navy)}
+    .fin-section{display:none}
+    .fin-section.active{display:block}
+    .period-btns{display:flex;gap:0.4rem;margin-bottom:1rem}
+    .period-btn{padding:0.35rem 0.8rem;border:1.5px solid var(--border);border-radius:4px;font-size:12px;cursor:pointer;background:#fff;font-family:Arial,sans-serif;color:var(--muted)}
+    .period-btn.active{background:var(--navy);border-color:var(--navy);color:var(--gold)}
+    .exp-cat-bar{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.6rem}
+    .exp-cat-label{font-size:13px;color:var(--text);width:160px;flex-shrink:0}
+    .exp-cat-track{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+    .exp-cat-fill{height:100%;background:var(--navy);border-radius:4px}
+    .exp-cat-amt{font-size:12px;color:var(--muted);width:80px;text-align:right}
+
+    @media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}.three-col{grid-template-columns:1fr}}
+    @media(max-width:600px){.sidebar{display:none}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">P<span>&</span>I Trucking</div>
+    <div class="login-sub">Fleet Management System</div>
+    <label class="lf-label">Username</label>
+    <input class="lf-input" id="lUser" type="text" placeholder="Enter username" autocomplete="username" />
+    <label class="lf-label">Password</label>
+    <input class="lf-input" id="lPass" type="password" placeholder="Enter password" autocomplete="current-password" />
+    <div class="lf-error" id="lErr">Incorrect username or password.</div>
+    <button class="login-btn" id="lBtn">Sign In →</button>
+
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sb-logo-main">P<span>&</span>I Trucking</div>
+      <div class="sb-logo-sub">Fleet Management</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-panel="overview"><span class="nav-icon">📊</span>Overview</div>
+      <div class="nav-item" data-panel="trips"><span class="nav-icon">🚛</span>Trips<span class="nav-badge" id="nb-trips">0</span></div>
+      <div class="nav-item" data-panel="fleet"><span class="nav-icon">🔧</span>Fleet</div>
+      <div class="nav-item" data-panel="staff"><span class="nav-icon">👷</span>Staff</div>
+      <div class="nav-item" data-panel="salary"><span class="nav-icon">💰</span>Salary</div>
+      <div class="nav-item" data-panel="financials"><span class="nav-icon">📈</span>Financials</div>
+      <div class="nav-item" data-panel="payslips"><span class="nav-icon">📄</span>Payslips</div>
+      <div class="nav-item" data-panel="settings"><span class="nav-icon">⚙️</span>Settings</div>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Sign Out</button>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-title" id="tbTitle">Overview</div>
+      <div class="tb-right">
+        <button class="tb-refresh" onclick="refreshData()" title="Refresh">↻</button>
+        <div class="tb-time" id="tbTime"></div>
+      </div>
+    </div>
+    <div class="content" id="content">
+
+      <!-- ══ OVERVIEW ══ -->
+      <div class="panel active" id="panel-overview">
+        <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:0.2rem" id="ovGreeting">Good morning 👋</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:1.2rem" id="ovDate"></div>
+
+        <div id="ovAlerts"></div>
+
+        <div class="stats-grid">
+          <div class="stat-card" onclick="switchPanel('trips')">
+            <div class="stat-top"><span class="stat-icon">🚛</span><div class="stat-num" id="ov-trips">0</div></div>
+            <div class="stat-lbl">Total Trips</div>
+            <div class="stat-trend" id="ov-trips-sub">This month</div>
+          </div>
+          <div class="stat-card" onclick="switchPanel('financials')">
+            <div class="stat-top"><span class="stat-icon">💵</span><div class="stat-num" id="ov-revenue">—</div></div>
+            <div class="stat-lbl">Revenue (Month)</div>
+            <div class="stat-trend" id="ov-revenue-sub">JMD</div>
+          </div>
+          <div class="stat-card warn" onclick="switchPanel('fleet')">
+            <div class="stat-top"><span class="stat-icon">⚠️</span><div class="stat-num" id="ov-maint">0</div></div>
+            <div class="stat-lbl">Maintenance Due</div>
+            <div class="stat-trend">Trucks needing attention</div>
+          </div>
+          <div class="stat-card" onclick="switchPanel('staff')">
+            <div class="stat-top"><span class="stat-icon">👷</span><div class="stat-num" id="ov-staff">0</div></div>
+            <div class="stat-lbl">Active Staff</div>
+            <div class="stat-trend" id="ov-staff-sub">Team members</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Recent Trips</div><button class="card-action" onclick="switchPanel('trips')">View All →</button></div>
+            <div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>Truck</th><th>Driver</th><th>Service</th><th>Revenue</th><th>Status</th></tr></thead>
+            <tbody id="ovTripsTable"><tr><td colspan="6" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Fleet Status</div><button class="card-action" onclick="switchPanel('fleet')">View Fleet →</button></div>
+            <div class="card-body" id="ovFleetStatus"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ TRIPS ══ -->
+      <div class="panel" id="panel-trips">
+        <div style="display:flex;justify-content:flex-end;gap:0.6rem;margin-bottom:0.8rem">
+          <button class="btn-outline" onclick="openManageDrawer('services')">⚙ Services</button>
+          <button class="btn-outline" onclick="openManageDrawer('clients')">⚙ Clients</button>
+          <button class="btn-primary" onclick="openTripDrawer(null)">+ Log Trip</button>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-tabs" id="tripFilterTabs">
+            <button class="ftab active" data-tf="all">All <span class="ftab-count" id="tfc-all">0</span></button>
+            <button class="ftab" data-tf="Scheduled">Scheduled <span class="ftab-count" id="tfc-scheduled">0</span></button>
+            <button class="ftab" data-tf="In Progress">In Progress <span class="ftab-count" id="tfc-progress">0</span></button>
+            <button class="ftab" data-tf="Completed">Completed <span class="ftab-count" id="tfc-completed">0</span></button>
+            <button class="ftab" data-tf="Cancelled">Cancelled <span class="ftab-count" id="tfc-cancelled">0</span></button>
+          </div>
+          <input type="text" class="search-input" id="tripSearch" placeholder="🔍 Search ref, truck, driver..." />
+        </div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Ref</th><th>Date</th><th>Truck</th><th>Driver</th><th>Sideman</th><th>Service</th><th>From → To</th><th>Revenue</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="tripTableBody"><tr><td colspan="10" class="loading"><span class="spinner"></span>Loading trips...</td></tr></tbody></table>
+          </div>
+          <div id="tripEmpty" class="empty-state" style="display:none">No trips found.</div>
+        </div>
+        <!-- Manage Services/Clients Drawer -->
+        <div class="overlay" id="manageOverlay"></div>
+        <div class="drawer" id="manageDrawer">
+          <div class="drw-head">
+            <div><div class="drw-title" id="manageDrwTitle">Manage</div></div>
+            <button class="drw-close" onclick="closeManageDrawer()">✕</button>
+          </div>
+          <div class="drw-body">
+            <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
+              <input class="field-input" id="manageNewItem" placeholder="Add new..." style="flex:1" />
+              <button class="btn-primary" onclick="addManageItem()">Add</button>
+            </div>
+            <div id="manageList" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+          </div>
+        </div>
+
+        <!-- Trip Drawer -->
+        <div class="overlay" id="tripOverlay"></div>
+        <div class="drawer" id="tripDrawer">
+          <div class="drw-head">
+            <div><div class="drw-title" id="tripDrwTitle">Log Trip</div><div class="drw-ref" id="tripDrwRef"></div></div>
+            <button class="drw-close" onclick="closeTripDrawer()">✕</button>
+          </div>
+          <div class="drw-body" id="tripDrwBody"></div>
+        </div>
+      </div>
+
+      <!-- ══ FLEET ══ -->
+      <div class="panel" id="panel-fleet">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+          <button class="btn-primary" onclick="openFleetDrawer(null)">+ Add Truck</button>
+        </div>
+        <div class="fleet-grid" id="fleetGrid"><div class="loading"><span class="spinner"></span>Loading fleet...</div></div>
+        <!-- Fleet Drawer -->
+        <div class="overlay" id="fleetOverlay"></div>
+        <div class="drawer" id="fleetDrawer">
+          <div class="drw-head">
+            <div><div class="drw-title" id="fleetDrwTitle">Add Truck</div></div>
+            <button class="drw-close" onclick="closeFleetDrawer()">✕</button>
+          </div>
+          <div class="drw-body">
+            <input type="hidden" id="fleetId" />
+            <div class="sf"><label>Truck Name / ID</label><input id="fTruckId" placeholder="e.g. Truck 1 or T-001" /></div>
+            <div class="sf"><label>License Plate</label><input id="fPlate" placeholder="e.g. AB 1234" /></div>
+            <div class="sf"><label>Make & Model</label><input id="fModel" placeholder="e.g. Isuzu NQR" /></div>
+            <div class="sf-row">
+              <div class="sf"><label>Year</label><input id="fYear" type="number" placeholder="2018" /></div>
+              <div class="sf"><label>Status</label>
+                <select id="fStatus"><option value="Active">Active</option><option value="In Shop">In Shop</option><option value="Inactive">Inactive</option></select>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);margin-bottom:0.6rem;margin-top:0.4rem">Maintenance Schedule</div>
+            <div id="maintSchedule"></div>
+            <button class="btn-outline" style="width:100%;margin-bottom:1rem;font-size:12px" onclick="addMaintItem()">+ Add Maintenance Item</button>
+            <div style="display:flex;gap:0.6rem">
+              <button class="drw-btn dark" onclick="saveFleet()">💾 Save Truck</button>
+              <button class="drw-btn outline" id="fleetDeleteBtn" onclick="deleteFleet()" style="display:none">🗑 Delete</button>
+              <button class="drw-btn outline" onclick="closeFleetDrawer()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ STAFF ══ -->
+      <div class="panel" id="panel-staff">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+          <button class="btn-primary" onclick="openStaffDrawer(null)">+ Add Staff</button>
+        </div>
+        <div class="workers-grid" id="staffGrid"><div class="loading"><span class="spinner"></span>Loading staff...</div></div>
+        <!-- Staff Drawer -->
+        <div class="overlay" id="staffOverlay"></div>
+        <div class="drawer" id="staffDrawer">
+          <div class="drw-head">
+            <div><div class="drw-title" id="staffDrwTitle">Add Staff</div></div>
+            <button class="drw-close" onclick="closeStaffDrawer()">✕</button>
+          </div>
+          <div class="drw-body">
+            <input type="hidden" id="staffId" />
+            <div class="sf"><label>Full Name</label><input id="sName" placeholder="e.g. Marcus Brown" /></div>
+            <div class="sf-row">
+              <div class="sf"><label>Role</label>
+                <select id="sRole">
+                  <option value="Driver">Driver</option>
+                  <option value="Sideman">Sideman</option>
+                  <option value="Office">Office</option>
+                  <option value="Manager">Manager</option>
+                </select>
+              </div>
+              <div class="sf"><label>Status</label>
+                <select id="sStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+              </div>
+            </div>
+            <div class="sf"><label>Phone</label><input id="sPhone" placeholder="876-XXX-XXXX" /></div>
+            <div class="sf"><label>Email (optional)</label><input id="sEmail" placeholder="email@example.com" /></div>
+            <div class="sf-row">
+              <div class="sf"><label>NIC Number</label><input id="sNIC" placeholder="e.g. 123456789" /></div>
+              <div class="sf"><label>TRN Number</label><input id="sTRN" placeholder="e.g. 123-456-789" /></div>
+            </div>
+            <div class="sf"><label>ID Photo</label>
+              <div style="border:2px dashed var(--border);border-radius:6px;padding:1rem;text-align:center;cursor:pointer;background:var(--bg)" onclick="document.getElementById('staffIdFile').click()">
+                <div id="staffIdPreview" style="display:none;margin-bottom:0.5rem"><img id="staffIdImg" style="max-height:120px;border-radius:4px;border:1px solid var(--border)" /></div>
+                <div style="font-size:13px;color:var(--muted)">📷 Click to upload ID photo</div>
+                <input type="file" id="staffIdFile" accept="image/*" style="display:none" onchange="previewStaffId(this)" />
+              </div>
+              <input type="hidden" id="staffIdPhotoUrl" />
+            </div>
+            <div class="sf"><label>Pay Type</label>
+              <select id="sPayType" onchange="togglePayFields()">
+                <option value="per_trip">Per Trip (Driver/Sideman)</option>
+                <option value="monthly">Monthly Salary (Office)</option>
+              </select>
+            </div>
+            <div id="perTripFields">
+              <div class="sf-row">
+                <div class="sf"><label>Driver Rate (JMD/trip)</label><input id="sDriverRate" type="number" placeholder="0" /></div>
+                <div class="sf"><label>Sideman Rate (JMD/trip)</label><input id="sSidemanRate" type="number" placeholder="0" /></div>
+              </div>
+            </div>
+            <div id="monthlyFields" style="display:none">
+              <div class="sf"><label>Monthly Salary (JMD)</label><input id="sMonthlySalary" type="number" placeholder="0" /></div>
+            </div>
+            <div style="display:flex;gap:0.6rem">
+              <button class="drw-btn dark" onclick="saveStaff()">💾 Save</button>
+              <button class="drw-btn outline" id="staffDeleteBtn" onclick="deleteStaff()" style="display:none">🗑 Delete</button>
+              <button class="drw-btn outline" onclick="closeStaffDrawer()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SALARY ══ -->
+      <div class="panel" id="panel-salary">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.6rem">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text)">Salary Calculator</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Drivers & sidemen paid per trip. Office staff paid monthly.</div>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <label style="font-size:12px;color:var(--muted)">Period:</label>
+            <input type="month" id="salaryMonth" class="field-input" style="width:150px" />
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Per-Trip Staff (Drivers & Sidemen)</div></div>
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Name</th><th>Role</th><th>Trips as Driver</th><th>Trips as Sideman</th><th>Rate/Trip</th><th>Total Earned</th><th>Actions</th></tr></thead>
+            <tbody id="salaryTripBody"><tr><td colspan="7" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Office & Monthly Staff</div></div>
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Name</th><th>Role</th><th>Monthly Salary</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="salaryMonthlyBody"><tr><td colspan="5" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table>
+          </div>
+        </div>
+        <!-- Salary Payment Drawer -->
+        <div class="overlay" id="salaryOverlay"></div>
+        <div class="drawer" id="salaryDrawer">
+          <div class="drw-head">
+            <div><div class="drw-title" id="salaryDrwTitle">Record Payment</div></div>
+            <button class="drw-close" onclick="closeSalaryDrawer()">✕</button>
+          </div>
+          <div class="drw-body" id="salaryDrwBody"></div>
+        </div>
+      </div>
+
+      <!-- ══ FINANCIALS ══ -->
+      <div class="panel" id="panel-financials">
+        <div class="fin-tabs" id="finTabs">
+          <div class="fin-tab active" data-ft="revenue">💵 Revenue</div>
+          <div class="fin-tab" data-ft="expenses">📤 Expenses</div>
+          <div class="fin-tab" data-ft="recurring">🔄 Recurring</div>
+          <div class="fin-tab" data-ft="summary">📊 Summary</div>
+        </div>
+
+        <!-- REVENUE -->
+        <div class="fin-section active" id="fin-revenue">
+          <div class="period-btns">
+            <button class="period-btn active" data-p="week">This Week</button>
+            <button class="period-btn" data-p="month">This Month</button>
+            <button class="period-btn" data-p="year">This Year</button>
+            <button class="period-btn" data-p="all">All Time</button>
+          </div>
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card"><div class="stat-top"><span class="stat-icon">💵</span><div class="stat-num" id="rev-total">—</div></div><div class="stat-lbl">Total Revenue</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-icon">✅</span><div class="stat-num" id="rev-collected">—</div></div><div class="stat-lbl">Collected</div></div>
+            <div class="stat-card urgent"><div class="stat-top"><span class="stat-icon">⏳</span><div class="stat-num" id="rev-outstanding">—</div></div><div class="stat-lbl">Outstanding</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Revenue by Trip</div></div>
+            <div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>Date</th><th>Service</th><th>Client</th><th>Amount</th><th>Paid</th><th>Outstanding</th><th>Method</th></tr></thead>
+            <tbody id="revTableBody"><tr><td colspan="8" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
+          </div>
+        </div>
+
+        <!-- EXPENSES -->
+        <div class="fin-section" id="fin-expenses">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+            <button class="btn-primary" onclick="openExpenseDrawer(null)">+ Add Expense</button>
+          </div>
+          <div class="two-col" style="margin-bottom:1rem">
+            <div class="card">
+              <div class="card-header"><div class="card-title">By Category</div></div>
+              <div class="card-body" id="expCatChart"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Summary</div></div>
+              <div class="card-body">
+                <div class="drw-row"><span class="drw-lbl">Total Expenses</span><span class="drw-val" id="exp-total">—</span></div>
+                <div class="drw-row"><span class="drw-lbl">Fuel</span><span class="drw-val" id="exp-fuel">—</span></div>
+                <div class="drw-row"><span class="drw-lbl">Maintenance</span><span class="drw-val" id="exp-maint">—</span></div>
+                <div class="drw-row"><span class="drw-lbl">Staff Salaries</span><span class="drw-val" id="exp-salary">—</span></div>
+                <div class="drw-row"><span class="drw-lbl">Tax</span><span class="drw-val" id="exp-tax">—</span></div>
+                <div class="drw-row"><span class="drw-lbl">Other</span><span class="drw-val" id="exp-other">—</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Expense Log</div></div>
+            <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Truck</th><th>Amount</th><th>Actions</th></tr></thead>
+            <tbody id="expTableBody"><tr><td colspan="6" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
+          </div>
+          <!-- Expense Drawer -->
+          <div class="overlay" id="expOverlay"></div>
+          <div class="drawer" id="expDrawer">
+            <div class="drw-head"><div><div class="drw-title" id="expDrwTitle">Add Expense</div></div><button class="drw-close" onclick="closeExpDrawer()">✕</button></div>
+            <div class="drw-body">
+              <input type="hidden" id="expId" />
+              <div class="sf"><label>Date</label><input id="expDate" type="date" /></div>
+              <div class="sf"><label>Category</label>
+                <select id="expCat">
+                  <option value="Fuel">Fuel</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Salary">Salary</option>
+                  <option value="Tax">Tax</option>
+                  <option value="Insurance">Insurance</option>
+                  <option value="Tolls">Tolls</option>
+                  <option value="Food">Staff Meals</option>
+                  <option value="Equipment">Equipment</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="sf"><label>Description</label><input id="expDesc" placeholder="e.g. Fuel for Truck 1" /></div>
+              <div class="sf"><label>Truck (optional)</label>
+                <select id="expTruck"><option value="">All / General</option></select>
+              </div>
+              <div class="sf"><label>Amount (JMD)</label><input id="expAmt" type="number" placeholder="0" /></div>
+              <div style="display:flex;gap:0.6rem">
+                <button class="drw-btn dark" onclick="saveExpense()">💾 Save</button>
+                <button class="drw-btn outline" id="expDeleteBtn" onclick="deleteExpense()" style="display:none">🗑 Delete</button>
+                <button class="drw-btn outline" onclick="closeExpDrawer()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECURRING -->
+        <div class="fin-section" id="fin-recurring">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+            <button class="btn-primary" onclick="openRecurringDrawer(null)">+ Add Recurring Expense</button>
+          </div>
+          <div class="card">
+            <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Category</th><th>Amount</th><th>Due Day</th><th>Next Due</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="recurringTableBody"><tr><td colspan="7" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
+          </div>
+          <!-- Recurring Drawer -->
+          <div class="overlay" id="recOverlay"></div>
+          <div class="drawer" id="recDrawer">
+            <div class="drw-head"><div><div class="drw-title" id="recDrwTitle">Add Recurring Expense</div></div><button class="drw-close" onclick="closeRecDrawer()">✕</button></div>
+            <div class="drw-body">
+              <input type="hidden" id="recId" />
+              <div class="sf"><label>Name</label><input id="recName" placeholder="e.g. Truck Insurance" /></div>
+              <div class="sf"><label>Category</label>
+                <select id="recCat">
+                  <option value="Insurance">Insurance</option>
+                  <option value="Tax">Tax / Fitness</option>
+                  <option value="Loan">Loan Payment</option>
+                  <option value="Rent">Rent / Parking</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="sf-row">
+                <div class="sf"><label>Amount (JMD)</label><input id="recAmt" type="number" placeholder="0" /></div>
+                <div class="sf"><label>Due Day of Month</label><input id="recDay" type="number" min="1" max="31" placeholder="e.g. 15" /></div>
+              </div>
+              <div class="sf"><label>Reminder Email</label><input id="recEmail" placeholder="your@email.com" /></div>
+              <div class="sf"><label>Days Before to Remind</label><input id="recRemind" type="number" placeholder="3" value="3" /></div>
+              <div style="display:flex;gap:0.6rem">
+                <button class="drw-btn dark" onclick="saveRecurring()">💾 Save</button>
+                <button class="drw-btn outline" id="recDeleteBtn" onclick="deleteRecurring()" style="display:none">🗑 Delete</button>
+                <button class="drw-btn outline" onclick="closeRecDrawer()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="fin-section" id="fin-summary">
+          <div class="period-btns" id="summaryPeriodBtns">
+            <button class="period-btn active" data-sp="month">This Month</button>
+            <button class="period-btn" data-sp="year">This Year</button>
+            <button class="period-btn" data-sp="all">All Time</button>
+          </div>
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card"><div class="stat-top"><span class="stat-icon">💵</span><div class="stat-num" id="sum-revenue">—</div></div><div class="stat-lbl">Total Revenue</div></div>
+            <div class="stat-card urgent"><div class="stat-top"><span class="stat-icon">📤</span><div class="stat-num" id="sum-expenses">—</div></div><div class="stat-lbl">Total Expenses</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-icon">📊</span><div class="stat-num" id="sum-profit">—</div></div><div class="stat-lbl">Net Profit</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Monthly Breakdown</div></div>
+            <div class="tbl-wrap"><table><thead><tr><th>Month</th><th>Revenue</th><th>Expenses</th><th>Net Profit</th><th>Margin</th></tr></thead>
+            <tbody id="summaryTableBody"><tr><td colspan="5" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PAYSLIPS ══ -->
+      <div class="panel" id="panel-payslips">
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:0.3rem">Payslip Reader</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:1.4rem">Upload a photo of a payslip and AI will extract the trip data and revenue automatically.</p>
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Upload Payslip</div></div>
+              <div class="card-body">
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('payslipFile').click()">
+                  <div class="upload-icon">📄</div>
+                  <div class="upload-title">Click to upload payslip photo</div>
+                  <div class="upload-sub">JPG, PNG or PDF — photo of payslip from client</div>
+                  <input type="file" id="payslipFile" accept="image/*,.pdf" style="display:none" onchange="handlePayslipUpload(this)" />
+                </div>
+                <div id="uploadPreview" style="display:none;margin-top:1rem">
+                  <img id="uploadedImg" style="max-width:100%;border-radius:4px;border:1px solid var(--border)" />
+                </div>
+                <div id="uploadStatus" style="margin-top:1rem;display:none">
+                  <div class="progress-bar"><div class="progress-fill" id="uploadProgress" style="width:0%;background:var(--navy)"></div></div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:0.4rem" id="uploadStatusText">Processing...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card" id="payslipResultCard" style="display:none">
+              <div class="card-header"><div class="card-title">Extracted Data</div></div>
+              <div class="card-body" id="payslipResult"></div>
+              <div style="padding:0 1.2rem 1.2rem;display:flex;gap:0.6rem">
+                <button class="drw-btn dark" onclick="savePayslipData()">💾 Save to Revenue</button>
+                <button class="drw-btn outline" onclick="resetPayslip()">Clear</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Recent Payslips</div></div>
+              <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Client</th><th>Trips</th><th>Amount</th></tr></thead>
+              <tbody id="payslipHistoryBody"><tr><td colspan="4" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SETTINGS ══ -->
+      <div class="panel" id="panel-settings">
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">🏢 Company Information</div></div>
+              <div class="card-body">
+                <div class="sf"><label>Company Name</label><input id="set-company" placeholder="P&I Enterprise Limited" /></div>
+                <div class="sf"><label>Trading Name</label><input id="set-trading" placeholder="P&I Trucking" /></div>
+                <div class="sf"><label>Phone</label><input id="set-phone" placeholder="+1 (876) 000-0000" /></div>
+                <div class="sf"><label>Email</label><input id="set-email" placeholder="info@pitrucking.com" /></div>
+                <div class="sf"><label>Notification Email (for reminders)</label><input id="set-notify-email" placeholder="alerts@pitrucking.com" /></div>
+                <button class="btn-primary" onclick="saveSettings()" style="width:100%">💾 Save Settings</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">👤 User Accounts</div><button class="card-action" onclick="openUserDrawer(null)">+ Add User</button></div>
+              <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Access</th><th>Actions</th></tr></thead>
+              <tbody id="usersTableBody"><tr><td colspan="4" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
+            </div>
+          </div>
+        </div>
+        <!-- User Drawer -->
+        <div class="overlay" id="userOverlay"></div>
+        <div class="drawer" id="userDrawer">
+          <div class="drw-head"><div><div class="drw-title" id="userDrwTitle">Add User</div></div><button class="drw-close" onclick="closeUserDrawer()">✕</button></div>
+          <div class="drw-body">
+            <input type="hidden" id="userId" />
+            <div class="sf"><label>Full Name</label><input id="uName" placeholder="e.g. Jane Smith" /></div>
+            <div class="sf-row">
+              <div class="sf"><label>Username</label><input id="uUsername" placeholder="janesmith" /></div>
+              <div class="sf"><label>Password</label><input id="uPassword" type="password" placeholder="Set password" /></div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);margin-bottom:0.6rem">Tab Access</div>
+            <div id="accessCheckboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:1rem"></div>
+            <div style="display:flex;gap:0.6rem">
+              <button class="drw-btn dark" onclick="saveUser()">💾 Save User</button>
+              <button class="drw-btn outline" id="userDeleteBtn" onclick="deleteUser()" style="display:none">🗑 Delete</button>
+              <button class="drw-btn outline" onclick="closeUserDrawer()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </div><!-- end main -->
+</div><!-- end app -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+<script>
+// ══ CONFIG ══
+var SUPABASE_URL = 'https://iufqxvudujixgssmroiq.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1ZnF4dnVkdWppeGdzc21yb2lxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTkzNTgsImV4cCI6MjA4OTg3NTM1OH0.clvCs7xw1how5FVMbYo3aeju9usMuiPY2pVJKI1Ut-E';
+var ANTHROPIC_KEY = '';  // Set via settings for payslip AI
+
+// ══ SUPABASE ══
+function sbGet(table, params) {
+  var url = SUPABASE_URL+'/rest/v1/'+table+'?order=created_at.desc';
+  if (params) url += '&'+params;
+  return fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(function(r){return r.json();});
+}
+function sbPost(table, data) {
+  return fetch(SUPABASE_URL+'/rest/v1/'+table,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(data)}).then(function(r){return r.json();});
+}
+function sbUpdate(table, id, data) {
+  return fetch(SUPABASE_URL+'/rest/v1/'+table+'?id=eq.'+id,{method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(data)}).then(function(r){return r.json();});
+}
+function sbUpsert(table, data) {
+  return fetch(SUPABASE_URL+'/rest/v1/'+table+'?on_conflict=id',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation,resolution=merge-duplicates'},body:JSON.stringify(data)}).then(function(r){return r.json();});
+}
+function sbDelete(table, id) {
+  return fetch(SUPABASE_URL+'/rest/v1/'+table+'?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+}
+
+
+// ══ CLIENTS & SERVICES MANAGEMENT ══
+var defaultServices = ['General Haulage','Furniture Moving','Construction Materials','Truck Advertisement','Container Haulage','Garbage Removal','Equipment Transport','Other'];
+var defaultClients  = ['Cari-Med Group Ltd'];
+
+function getServices(){ return JSON.parse(localStorage.getItem('pi-trucking-services') || JSON.stringify(defaultServices)); }
+function getClients(){  return JSON.parse(localStorage.getItem('pi-trucking-clients')  || JSON.stringify(defaultClients));  }
+function saveServices(arr){ localStorage.setItem('pi-trucking-services', JSON.stringify(arr)); }
+function saveClients(arr){  localStorage.setItem('pi-trucking-clients',  JSON.stringify(arr)); }
+
+var manageMode = 'services';
+
+window.openManageDrawer = function(mode) {
+  manageMode = mode;
+  document.getElementById('manageDrwTitle').textContent = mode === 'services' ? 'Manage Service Types' : 'Manage Clients & Companies';
+  document.getElementById('manageNewItem').value = '';
+  document.getElementById('manageNewItem').placeholder = mode === 'services' ? 'e.g. Furniture Moving' : 'e.g. Cari-Med Group Ltd';
+  renderManageList();
+  try{document.getElementById('manageOverlay').classList.add('open');}catch(e){}
+  try{document.getElementById('manageDrawer').classList.add('open');}catch(e){}
+};
+
+function renderManageList() {
+  var items = manageMode === 'services' ? getServices() : getClients();
+  var list = document.getElementById('manageList');
+  if (!list) return;
+  list.innerHTML = items.map(function(item, i) {
+    return '<div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.7rem;background:var(--bg);border-radius:4px;border:1px solid var(--border)">' +
+      '<span style="flex:1;font-size:13px">' + item + '</span>' +
+      '<button class="btn-sm red" data-manage-idx="' + i + '">✕</button>' +
+    '</div>';
+  }).join('') || '<div class="t-sub" style="text-align:center;padding:1rem">No items yet.</div>';
+  list.querySelectorAll('[data-manage-idx]').forEach(function(btn) {
+    btn.onclick = function() {
+      var items = manageMode === 'services' ? getServices() : getClients();
+      items.splice(parseInt(btn.dataset.manageIdx), 1);
+      if (manageMode === 'services') saveServices(items); else saveClients(items);
+      renderManageList();
+    };
+  });
+}
+
+window.addManageItem = function() {
+  var val = document.getElementById('manageNewItem').value.trim();
+  if (!val) return;
+  var items = manageMode === 'services' ? getServices() : getClients();
+  if (items.includes(val)) { showToast('Already exists', 'error'); return; }
+  items.push(val);
+  if (manageMode === 'services') saveServices(items); else saveClients(items);
+  document.getElementById('manageNewItem').value = '';
+  renderManageList();
+  showToast('"' + val + '" added ✓');
+};
+try { document.getElementById('manageNewItem').addEventListener('keydown', function(e){ if(e.key==='Enter') window.addManageItem(); }); } catch(e) {}
+
+function closeManageDrawer() {
+  try{document.getElementById('manageOverlay').classList.remove('open');}catch(e){}
+  try{document.getElementById('manageDrawer').classList.remove('open');}catch(e){}
+}
+try{document.getElementById('manageOverlay').onclick=closeManageDrawer;}catch(e){}
+
+// Build dropdown options
+function buildServiceOpts(selected) {
+  var items = getServices();
+  return items.map(function(s) {
+    return '<option value="' + s + '"' + (s === selected ? ' selected' : '') + '>' + s + '</option>';
+  }).join('');
+}
+function buildClientOpts(selected) {
+  var items = getClients();
+  return '<option value="">— Select Client —</option>' + items.map(function(s) {
+    return '<option value="' + s + '"' + (s === selected ? ' selected' : '') + '>' + s + '</option>';
+  }).join('');
+}
+
+// ══ STAFF ID PHOTO ══
+window.previewStaffId = function(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('staffIdImg').src = e.target.result;
+    document.getElementById('staffIdPreview').style.display = 'block';
+    // Upload to Supabase storage
+    var base64 = e.target.result.split(',')[1];
+    var filename = 'staff-ids/' + Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.]/g, '-');
+    fetch('https://iufqxvudujixgssmroiq.supabase.co/storage/v1/object/site-images/' + filename, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': file.type || 'image/jpeg', 'x-upsert': 'true' },
+      body: Uint8Array.from(atob(base64), function(c) { return c.charCodeAt(0); })
+    }).then(function(r) {
+      if (!r.ok) throw new Error(r.status);
+      var url = SUPABASE_URL + '/storage/v1/object/public/site-images/' + filename;
+      document.getElementById('staffIdPhotoUrl').value = url;
+      showToast('ID photo uploaded ✓');
+    }).catch(function() {
+      // Store as base64 locally if upload fails
+      document.getElementById('staffIdPhotoUrl').value = e.target.result;
+      showToast('ID saved locally (storage bucket not set up)', 'error');
+    });
+  };
+  reader.readAsDataURL(file);
+};
+
+// ══ AUTH ══
+var USERS = [{username:'admin',password:'pitrucking2025',name:'Admin',access:['overview','trips','fleet','staff','salary','financials','payslips','settings']}];
+var currentUser = null;
+
+function doLogin() {
+  var u = document.getElementById('lUser').value.trim();
+  var p = document.getElementById('lPass').value;
+  var found = null;
+  // Check default admin
+  if (u === 'admin' && p === 'pitrucking2025') {
+    found = {username:'admin',name:'Admin',access:['overview','trips','fleet','staff','salary','financials','payslips','settings']};
+  }
+  // Check DB users
+  if (!found) {
+    var dbUsers = JSON.parse(localStorage.getItem('pi-trucking-users')||'[]');
+    dbUsers.forEach(function(user) { if (user.username===u && user.password===p) found=user; });
+  }
+  if (found) {
+    currentUser = found;
+    document.getElementById('loginScreen').classList.add('hide');
+    document.getElementById('app').classList.add('show');
+    // Hide tabs user doesn't have access to
+    document.querySelectorAll('.nav-item').forEach(function(el) {
+      if (el.dataset.panel && !found.access.includes(el.dataset.panel)) el.style.display='none';
+    });
+    initDashboard();
+  } else {
+    document.getElementById('lErr').classList.add('show');
+    document.getElementById('lUser').classList.add('err');
+    document.getElementById('lPass').classList.add('err');
+    document.getElementById('lPass').value='';
+  }
+}
+try{document.getElementById('lBtn').onclick=doLogin;}catch(e){}
+try{document.getElementById('lPass').onkeydown=function(e){if(e.key==='Enter')doLogin();};}catch(e){}
+try{document.getElementById('lUser').onkeydown=function(e){if(e.key==='Enter')document.getElementById('lPass').focus();};}catch(e){}
+['lUser','lPass'].forEach(function(id){
+  try{document.getElementById(id).oninput=function(){document.getElementById('lErr').classList.remove('show');document.getElementById('lUser').classList.remove('err');document.getElementById('lPass').classList.remove('err');};}catch(e){}
+});
+try{document.getElementById('logoutBtn').onclick=function(){if(confirm('Sign out?')){document.getElementById('app').classList.remove('show');document.getElementById('loginScreen').classList.remove('hide');document.getElementById('lUser').value='';document.getElementById('lPass').value='';currentUser=null;}};}catch(e){}
+
+// ══ TOAST ══
+function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success')+' show';setTimeout(function(){t.classList.remove('show');},3000);}
+
+// ══ HELPERS ══
+function fmtMoney(n){return n>0?'JMD '+Number(n).toLocaleString():'—';}
+function fmtDate(str){if(!str)return'—';var d=new Date(str);var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return m[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();}
+function genRef(){return 'TR-'+Math.floor(100000+Math.random()*900000);}
+var avBg=['#eff6ff','#edf7f2','#f5f0ff','#fff0f9','#fffbeb'];
+var avTx=['#2563eb','#2d6a4f','#7c3aed','#be185d','#d97706'];
+function avStyle(i){var x=i%avBg.length;return 'background:'+avBg[x]+';color:'+avTx[x];}
+function initials(name){return(name||'').split(' ').map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase();}
+
+// ══ PANEL SWITCHING ══
+var panelNames={overview:'Overview',trips:'Trips',fleet:'Fleet',staff:'Staff',salary:'Salary',financials:'Financials',payslips:'Payslips',settings:'Settings'};
+function switchPanel(name){
+  document.querySelectorAll('.nav-item').forEach(function(el){el.classList.toggle('active',el.dataset.panel===name);});
+  document.querySelectorAll('.panel').forEach(function(el){el.classList.remove('active');});
+  var p=document.getElementById('panel-'+name);if(p)p.classList.add('active');
+  document.getElementById('tbTitle').textContent=panelNames[name]||name;
+  document.getElementById('content').scrollTop=0;
+  if(name==='salary')renderSalary();
+  if(name==='financials')renderFinancials();
+  if(name==='settings')loadSettings();
+  if(name==='payslips')loadPayslipHistory();
+}
+document.querySelectorAll('.nav-item').forEach(function(el){el.onclick=function(){if(el.dataset.panel)switchPanel(el.dataset.panel);};});
+
+// ══ DATA ══
+var allTrips=[],allFleet=[],allStaff=[],allExpenses=[],allRecurring=[],companySettings={};
+
+function refreshData(){
+  showToast('Refreshing...','success');
+  Promise.all([loadTrips(),loadFleet(),loadStaff(),loadExpenses(),loadRecurring()]).then(function(r){
+    loadOverview();showToast('Refreshed ✓');
+  });
+}
+
+// ══ TRIPS ══
+var tripFilter='all',tripSearch='',currentTrip=null;
+
+function loadTrips(){
+  return sbGet('tr_trips').then(function(data){
+    allTrips=Array.isArray(data)?data:[];
+    updateTripCounts();renderTrips();return allTrips;
+  }).catch(function(){allTrips=[];renderTrips();return[];});
+}
+
+function updateTripCounts(){
+  var c={all:allTrips.length,Scheduled:0,'In Progress':0,Completed:0,Cancelled:0};
+  allTrips.forEach(function(t){if(c[t.status]!==undefined)c[t.status]++;});
+  document.getElementById('tfc-all').textContent=c.all;
+  document.getElementById('tfc-scheduled').textContent=c.Scheduled;
+  document.getElementById('tfc-progress').textContent=c['In Progress'];
+  document.getElementById('tfc-completed').textContent=c.Completed;
+  document.getElementById('tfc-cancelled').textContent=c.Cancelled;
+  document.getElementById('nb-trips').textContent=c.Scheduled+c['In Progress'];
+}
+
+function renderTrips(){
+  var filtered=allTrips.filter(function(t){
+    var mf=tripFilter==='all'||t.status===tripFilter;
+    var q=tripSearch.toLowerCase();
+    var mq=!q||(t.ref||'').toLowerCase().includes(q)||(t.truck_id||'').toLowerCase().includes(q)||(t.driver_name||'').toLowerCase().includes(q);
+    return mf&&mq;
+  });
+  var tbody=document.getElementById('tripTableBody');
+  var empty=document.getElementById('tripEmpty');
+  if(filtered.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  var statusColors={'Scheduled':'b-pending','In Progress':'b-active','Completed':'b-done','Cancelled':'b-inactive'};
+  tbody.innerHTML=filtered.map(function(t){
+    return '<tr>'+
+      '<td><span class="t-ref">'+t.ref+'</span></td>'+
+      '<td><div class="t-sub">'+fmtDate(t.trip_date)+'</div></td>'+
+      '<td><div class="t-name">'+( t.truck_id||'—')+'</div></td>'+
+      '<td><div class="t-sub">'+(t.driver_name||'—')+'</div></td>'+
+      '<td><div class="t-sub">'+(t.sideman_name||'—')+'</div></td>'+
+      '<td><div class="t-sub" style="max-width:100px;white-space:normal">'+(t.service_type||'—')+'</div></td>'+
+      '<td><div class="t-sub" style="max-width:120px;white-space:normal">'+(t.origin||'')+(t.origin&&t.destination?' → ':'')+( t.destination||'')+'</div></td>'+
+      '<td><strong>'+fmtMoney(t.revenue)+'</strong></td>'+
+      '<td><span class="badge '+(statusColors[t.status]||'b-pending')+'">'+t.status+'</span></td>'+
+      '<td><button class="btn-sm blue" data-trip-id="'+t.id+'">View</button></td>'+
+    '</tr>';
+  }).join('');
+  tbody.querySelectorAll('[data-trip-id]').forEach(function(btn){btn.onclick=function(){openTripDrawer(btn.dataset.tripId);};});
+}
+
+document.querySelectorAll('#tripFilterTabs .ftab').forEach(function(btn){
+  btn.onclick=function(){document.querySelectorAll('#tripFilterTabs .ftab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');tripFilter=btn.dataset.tf;renderTrips();};
+});
+try{document.getElementById('tripSearch').oninput=function(){tripSearch=this.value;renderTrips();};}catch(e){}
+
+function openTripDrawer(id){
+  var trip=id?allTrips.find(function(t){return t.id===id;}):null;
+  currentTrip=trip;
+  document.getElementById('tripDrwTitle').textContent=trip?'Trip '+trip.ref:'Log New Trip';
+  document.getElementById('tripDrwRef').textContent=trip?fmtDate(trip.trip_date):'';
+  var truckOpts=allFleet.map(function(f){return '<option value="'+f.truck_id+'"'+(trip&&trip.truck_id===f.truck_id?' selected':'')+'>'+f.truck_id+' ('+f.plate+')</option>';}).join('');
+  var driverOpts='<option value="">— Select Driver —</option>'+allStaff.filter(function(s){return s.role==='Driver'&&s.status==='Active';}).map(function(s){return '<option value="'+s.name+'"'+(trip&&trip.driver_name===s.name?' selected':'')+'>'+s.name+'</option>';}).join('');
+  var sidemanOpts='<option value="">— None —</option>'+allStaff.filter(function(s){return (s.role==='Sideman'||s.role==='Driver')&&s.status==='Active';}).map(function(s){return '<option value="'+s.name+'"'+(trip&&trip.sideman_name===s.name?' selected':'')+'>'+s.name+'</option>';}).join('');
+  var statusOpts=['Scheduled','In Progress','Completed','Cancelled'].map(function(s){return '<option value="'+s+'"'+(trip&&trip.status===s?' selected':s==='Scheduled'&&!trip?' selected':'')+'>'+s+'</option>';}).join('');
+  document.getElementById('tripDrwBody').innerHTML=
+    '<div class="drw-section"><div class="drw-sec-title">Trip Details</div>'+
+    '<div class="sf"><label>Date</label><input class="field-input" id="td-date" type="date" value="'+(trip?trip.trip_date:new Date().toISOString().split('T')[0])+'" /></div>'+
+    '<div class="sf"><label>Truck</label><select class="field-input" id="td-truck"><option value="">— Select Truck —</option>'+truckOpts+'</select></div>'+
+    '<div class="sf-row"><div class="sf"><label>Driver</label><select class="field-input" id="td-driver">'+driverOpts+'</select></div>'+
+    '<div class="sf"><label>Sideman</label><select class="field-input" id="td-sideman">'+sidemanOpts+'</select></div></div>'+
+    '<div class="sf"><label>Service Type</label><select class="field-input" id="td-service"><option value="">— Select Service —</option>'+buildServiceOpts(trip?trip.service_type:'')+' </select></div>'+
+    '<div class="sf-row"><div class="sf"><label>From</label><input class="field-input" id="td-from" placeholder="Origin" value="'+(trip?trip.origin||'':'')+'" /></div>'+
+    '<div class="sf"><label>To</label><input class="field-input" id="td-to" placeholder="Destination" value="'+(trip?trip.destination||'':'')+'" /></div></div>'+
+    '<div class="sf"><label>Client / Company</label><select class="field-input" id="td-client">'+buildClientOpts(trip?trip.client:'')+' </select></div>'+
+    '</div>'+
+    '<div class="drw-section"><div class="drw-sec-title">Revenue</div>'+
+    '<div class="sf-row"><div class="sf"><label>Trip Revenue (JMD)</label><input class="field-input" id="td-revenue" type="number" placeholder="0" value="'+(trip?trip.revenue||'':'')+'" /></div>'+
+    '<div class="sf"><label>Amount Paid</label><input class="field-input" id="td-paid" type="number" placeholder="0" value="'+(trip?trip.amount_paid||'':'')+'" /></div></div>'+
+    '<div class="sf"><label>Payment Method</label><select class="field-input" id="td-method"><option value="">—</option><option value="Cash"'+(trip&&trip.payment_method==='Cash'?' selected':'')+'>Cash</option><option value="Bank Transfer"'+(trip&&trip.payment_method==='Bank Transfer'?' selected':'')+'>Bank Transfer</option><option value="Cheque"'+(trip&&trip.payment_method==='Cheque'?' selected':'')+'>Cheque</option></select></div>'+
+    '</div>'+
+    '<div class="drw-section"><div class="drw-sec-title">Notes & Status</div>'+
+    '<div class="sf"><label>Notes</label><textarea class="field-input" id="td-notes" rows="2">'+(trip?trip.notes||'':'')+' </textarea></div>'+
+    '<div class="sf"><label>Status</label><select class="field-input" id="td-status">'+statusOpts+'</select></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:0.6rem;flex-wrap:wrap">'+
+    '<button class="drw-btn dark" onclick="saveTrip()">💾 Save Trip</button>'+
+    (trip?'<button class="drw-btn red" onclick="deleteTrip()">🗑 Delete</button>':'')+
+    '<button class="drw-btn outline" onclick="closeTripDrawer()">Cancel</button>'+
+    '</div>';
+  try{document.getElementById('tripOverlay').classList.add('open');}catch(e){}
+  try{document.getElementById('tripDrawer').classList.add('open');}catch(e){}
+}
+
+window.saveTrip=function(){
+  var data={
+    ref:currentTrip?currentTrip.ref:genRef(),
+    trip_date:document.getElementById('td-date').value,
+    truck_id:document.getElementById('td-truck').value,
+    driver_name:document.getElementById('td-driver').value,
+    sideman_name:document.getElementById('td-sideman').value,
+    service_type:document.getElementById('td-service').value.trim(),
+    origin:document.getElementById('td-from').value.trim(),
+    destination:document.getElementById('td-to').value.trim(),
+    client:document.getElementById('td-client').value.trim(),
+    revenue:parseFloat(document.getElementById('td-revenue').value)||0,
+    amount_paid:parseFloat(document.getElementById('td-paid').value)||0,
+    payment_method:document.getElementById('td-method').value,
+    notes:document.getElementById('td-notes').value.trim(),
+    status:document.getElementById('td-status').value
+  };
+  var p=currentTrip?sbUpdate('tr_trips',currentTrip.id,data):sbPost('tr_trips',data);
+  p.then(function(result){
+    var saved=Array.isArray(result)?result[0]:result;
+    if(currentTrip){var idx=allTrips.findIndex(function(t){return t.id===currentTrip.id;});if(idx>=0)allTrips[idx]=Object.assign({id:currentTrip.id},data);}
+    else if(saved&&saved.id)allTrips.unshift(saved);
+    updateTripCounts();renderTrips();closeTripDrawer();
+    showToast(currentTrip?'Trip updated ✓':'Trip logged ✓');
+  }).catch(function(){showToast('Failed to save trip','error');});
+};
+window.deleteTrip=function(){
+  if(!currentTrip||!confirm('Delete trip '+currentTrip.ref+'?'))return;
+  sbDelete('tr_trips',currentTrip.id).then(function(){allTrips=allTrips.filter(function(t){return t.id!==currentTrip.id;});updateTripCounts();renderTrips();closeTripDrawer();showToast('Trip deleted');});
+};
+function closeTripDrawer(){try{document.getElementById('tripOverlay').classList.remove('open');}catch(e){}try{document.getElementById('tripDrawer').classList.remove('open');}catch(e){}currentTrip=null;}
+try{document.getElementById('tripOverlay').onclick=closeTripDrawer;}catch(e){}
+
+// ══ FLEET ══
+var currentFleet=null;
+var maintItems=[];
+
+function loadFleet(){
+  return sbGet('tr_fleet').then(function(data){allFleet=Array.isArray(data)?data:[];renderFleet();return allFleet;}).catch(function(){allFleet=[];renderFleet();return[];});
+}
+
+function renderFleet(){
+  var grid=document.getElementById('fleetGrid');
+  if(!grid)return;
+  if(allFleet.length===0){grid.innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted)">No trucks added yet. Click <strong>+ Add Truck</strong>.</div>';return;}
+  grid.innerHTML=allFleet.map(function(f){
+    var maint=Array.isArray(f.maintenance)?f.maintenance:[];
+    var today=new Date();
+    var overdueCount=0,dueCount=0;
+    maint.forEach(function(m){
+      if(!m.next_due)return;
+      var due=new Date(m.next_due);
+      var diff=Math.ceil((due-today)/(1000*60*60*24));
+      if(diff<0)overdueCount++;else if(diff<=14)dueCount++;
+    });
+    var statusColor=f.status==='Active'?'b-active':f.status==='In Shop'?'b-pending':'b-inactive';
+    return '<div class="fleet-card">'+
+      '<div class="fleet-card-head">'+
+        '<div><div class="fleet-truck-id">'+f.truck_id+'</div><div class="fleet-plate">'+f.plate+'</div></div>'+
+        '<span class="badge '+statusColor+'">'+f.status+'</span>'+
+      '</div>'+
+      '<div class="fleet-card-body">'+
+        '<div class="t-sub" style="margin-bottom:0.8rem">'+f.model+' '+(f.year||'')+'</div>'+
+        (overdueCount>0?'<div class="alert-banner error" style="padding:0.5rem 0.8rem;font-size:12px;margin-bottom:0.6rem">⚠️ '+overdueCount+' maintenance item(s) OVERDUE</div>':'')+ 
+        (dueCount>0&&!overdueCount?'<div class="alert-banner warn" style="padding:0.5rem 0.8rem;font-size:12px;margin-bottom:0.6rem">🔔 '+dueCount+' item(s) due within 14 days</div>':'')+
+        '<div style="margin-bottom:0.8rem">'+
+          maint.slice(0,4).map(function(m){
+            if(!m.name)return'';
+            var due=m.next_due?new Date(m.next_due):null;
+            var today2=new Date();
+            var diff=due?Math.ceil((due-today2)/(1000*60*60*24)):null;
+            var color=diff===null?'#aaa':diff<0?'var(--red)':diff<=14?'var(--orange)':'var(--green)';
+            return '<div class="maint-item"><div style="display:flex;align-items:center"><div class="maint-dot" style="background:'+color+'"></div>'+m.name+'</div><div class="t-sub">'+(m.next_due?fmtDate(m.next_due):'No date')+'</div></div>';
+          }).join('')+
+        '</div>'+
+        '<div style="display:flex;gap:0.4rem">'+
+          '<button class="btn-sm blue" data-fleet-id="'+f.id+'">Edit</button>'+
+          '<button class="btn-sm" data-fleet-trip="'+f.truck_id+'" onclick="switchPanel(\'trips\')">View Trips</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  grid.querySelectorAll('[data-fleet-id]').forEach(function(btn){btn.onclick=function(){openFleetDrawer(btn.dataset.fleetId);};});
+}
+
+function openFleetDrawer(id){
+  var fleet=id?allFleet.find(function(f){return f.id===id;}):null;
+  currentFleet=fleet;
+  maintItems=fleet&&Array.isArray(fleet.maintenance)?JSON.parse(JSON.stringify(fleet.maintenance)):[];
+  document.getElementById('fleetDrwTitle').textContent=fleet?'Edit Truck':'Add Truck';
+  document.getElementById('fleetId').value=fleet?fleet.id:'';
+  document.getElementById('fTruckId').value=fleet?fleet.truck_id||'':'';
+  document.getElementById('fPlate').value=fleet?fleet.plate||'':'';
+  document.getElementById('fModel').value=fleet?fleet.model||'':'';
+  document.getElementById('fYear').value=fleet?fleet.year||'':'';
+  document.getElementById('fStatus').value=fleet?fleet.status||'Active':'Active';
+  document.getElementById('fleetDeleteBtn').style.display=fleet?'flex':'none';
+  renderMaintItems();
+  try{document.getElementById('fleetOverlay').classList.add('open');}catch(e){}
+  try{document.getElementById('fleetDrawer').classList.add('open');}catch(e){}
+}
+
+function renderMaintItems(){
+  var wrap=document.getElementById('maintSchedule');
+  if(!wrap)return;
+  wrap.innerHTML=maintItems.map(function(m,i){
+    return '<div style="background:var(--bg);border-radius:4px;padding:0.7rem;margin-bottom:0.5rem;border:1px solid var(--border)">'+
+      '<div class="sf-row" style="margin-bottom:0.4rem">'+
+        '<div class="sf"><label style="font-size:10px">Item</label><input class="field-input" style="font-size:12px" value="'+( m.name||'')+'" onchange="maintItems['+i+'].name=this.value" placeholder="e.g. Oil Change" /></div>'+
+        '<div class="sf"><label style="font-size:10px">Every (days)</label><input class="field-input" style="font-size:12px" type="number" value="'+(m.interval_days||'')+'" onchange="maintItems['+i+'].interval_days=parseInt(this.value)" placeholder="90" /></div>'+
+      '</div>'+
+      '<div class="sf-row">'+
+        '<div class="sf"><label style="font-size:10px">Last Done</label><input class="field-input" style="font-size:12px" type="date" value="'+(m.last_done||'')+'" onchange="maintItems['+i+'].last_done=this.value;updateNextDue('+i+')" /></div>'+
+        '<div class="sf"><label style="font-size:10px">Next Due</label><input class="field-input" style="font-size:12px" type="date" value="'+(m.next_due||'')+'" onchange="maintItems['+i+'].next_due=this.value" /></div>'+
+      '</div>'+
+      '<button onclick="removeMaintItem('+i+')" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;margin-top:0.2rem">✕ Remove</button>'+
+    '</div>';
+  }).join('');
+}
+
+window.addMaintItem=function(){maintItems.push({name:'',interval_days:90,last_done:'',next_due:''});renderMaintItems();};
+window.removeMaintItem=function(i){maintItems.splice(i,1);renderMaintItems();};
+window.updateNextDue=function(i){
+  var m=maintItems[i];
+  if(m.last_done&&m.interval_days){
+    var d=new Date(m.last_done);d.setDate(d.getDate()+parseInt(m.interval_days));
+    m.next_due=d.toISOString().split('T')[0];renderMaintItems();
+  }
+};
+
+window.saveFleet=function(){
+  var name=document.getElementById('fTruckId').value.trim();
+  if(!name){showToast('Please enter a truck ID','error');return;}
+  var data={truck_id:name,plate:document.getElementById('fPlate').value.trim(),model:document.getElementById('fModel').value.trim(),year:document.getElementById('fYear').value,status:document.getElementById('fStatus').value,maintenance:maintItems};
+  var existingId=document.getElementById('fleetId').value;
+  var p=existingId?sbUpdate('tr_fleet',existingId,data):sbPost('tr_fleet',data);
+  p.then(function(result){
+    var saved=Array.isArray(result)?result[0]:result;
+    if(existingId){var idx=allFleet.findIndex(function(f){return f.id===existingId;});if(idx>=0)allFleet[idx]=Object.assign({id:existingId},data);}
+    else if(saved&&saved.id)allFleet.unshift(saved);
+    renderFleet();closeFleetDrawer();showToast(existingId?'Truck updated ✓':'Truck added ✓');
+  }).catch(function(){showToast('Failed to save truck','error');});
+};
+window.deleteFleet=function(){
+  if(!currentFleet||!confirm('Remove '+currentFleet.truck_id+'?'))return;
+  sbDelete('tr_fleet',currentFleet.id).then(function(){allFleet=allFleet.filter(function(f){return f.id!==currentFleet.id;});renderFleet();closeFleetDrawer();showToast('Truck removed');});
+};
+function closeFleetDrawer(){try{document.getElementById('fleetOverlay').classList.remove('open');}catch(e){}try{document.getElementById('fleetDrawer').classList.remove('open');}catch(e){}currentFleet=null;}
+try{document.getElementById('fleetOverlay').onclick=closeFleetDrawer;}catch(e){}
+
+// ══ STAFF ══
+var currentStaff=null;
+
+function loadStaff(){
+  return sbGet('tr_staff').then(function(data){allStaff=Array.isArray(data)?data:[];renderStaff();return allStaff;}).catch(function(){allStaff=[];renderStaff();return[];});
+}
+
+function renderStaff(){
+  var grid=document.getElementById('staffGrid');
+  if(!grid)return;
+  if(allStaff.length===0){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted)">No staff added yet.</div>';return;}
+  var roleBadge={Driver:'b-driver',Sideman:'b-sideman',Office:'b-office',Manager:'b-office'};
+  grid.innerHTML=allStaff.map(function(s,i){
+    var trips=allTrips.filter(function(t){return t.driver_name===s.name||t.sideman_name===s.name;});
+    return '<div class="worker-card">'+
+      '<div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem">'+
+        '<div class="worker-avatar" style="'+avStyle(i)+'">'+initials(s.name)+'</div>'+
+        '<div style="flex:1"><div style="font-weight:600;font-size:14px">'+s.name+'</div><div class="t-sub">'+s.phone+'</div></div>'+
+        '<span class="badge '+(roleBadge[s.role]||'b-driver')+'">'+s.role+'</span>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:0.4rem">'+
+        (s.pay_type==='monthly'?'Monthly: JMD '+(s.monthly_salary||0).toLocaleString():'Per trip | Driver: JMD '+(s.driver_rate||0).toLocaleString()+' | Sideman: JMD '+(s.sideman_rate||0).toLocaleString())+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:0.8rem">Trips this month: <strong>'+trips.length+'</strong></div>'+
+      '<div style="display:flex;gap:0.4rem">'+
+        '<button class="btn-sm blue" data-staff-id="'+s.id+'">Edit</button>'+
+        '<span class="badge '+(s.status==='Active'?'b-active':'b-inactive')+'" style="margin-left:auto">'+s.status+'</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  grid.querySelectorAll('[data-staff-id]').forEach(function(btn){btn.onclick=function(){openStaffDrawer(btn.dataset.staffId);};});
+}
+
+function openStaffDrawer(id){
+  var staff=id?allStaff.find(function(s){return s.id===id;}):null;
+  currentStaff=staff;
+  document.getElementById('staffDrwTitle').textContent=staff?'Edit Staff':'Add Staff';
+  document.getElementById('staffId').value=staff?staff.id:'';
+  document.getElementById('sName').value=staff?staff.name||'':'';
+  document.getElementById('sRole').value=staff?staff.role||'Driver':'Driver';
+  document.getElementById('sStatus').value=staff?staff.status||'Active':'Active';
+  document.getElementById('sPhone').value=staff?staff.phone||'':'';
+  document.getElementById('sEmail').value=staff?staff.email||'':'';
+  document.getElementById('sPayType').value=staff?staff.pay_type||'per_trip':'per_trip';
+  document.getElementById('sDriverRate').value=staff?staff.driver_rate||'':'';
+  document.getElementById('sSidemanRate').value=staff?staff.sideman_rate||'':'';
+  document.getElementById('sMonthlySalary').value=staff?staff.monthly_salary||'':'';
+  document.getElementById('staffDeleteBtn').style.display=staff?'flex':'none';
+  if(document.getElementById('sNIC')) document.getElementById('sNIC').value=staff?staff.nic||'':'';
+  if(document.getElementById('sTRN')) document.getElementById('sTRN').value=staff?staff.trn||'':'';
+  var photoEl=document.getElementById('staffIdPhotoUrl'); if(photoEl) photoEl.value=(staff&&staff.id_photo)?staff.id_photo:'';
+  var preview=document.getElementById('staffIdPreview'); var img=document.getElementById('staffIdImg');
+  if(staff&&staff.id_photo&&preview&&img){img.src=staff.id_photo;preview.style.display='block';} else if(preview){preview.style.display='none';}
+  togglePayFields();
+  try{document.getElementById('staffOverlay').classList.add('open');}catch(e){}
+  try{document.getElementById('staffDrawer').classList.add('open');}catch(e){}
+}
+window.togglePayFields=function(){
+  var t=document.getElementById('sPayType').value;
+  document.getElementById('perTripFields').style.display=t==='per_trip'?'block':'none';
+  document.getElementById('monthlyFields').style.display=t==='monthly'?'block':'none';
+};
+window.saveStaff=function(){
+  var name=document.getElementById('sName').value.trim();
+  if(!name){showToast('Please enter a name','error');return;}
+  var data={name:name,role:document.getElementById('sRole').value,status:document.getElementById('sStatus').value,phone:document.getElementById('sPhone').value.trim(),email:document.getElementById('sEmail').value.trim(),nic:document.getElementById('sNIC')?document.getElementById('sNIC').value.trim():'',trn:document.getElementById('sTRN')?document.getElementById('sTRN').value.trim():'',id_photo:document.getElementById('staffIdPhotoUrl')?document.getElementById('staffIdPhotoUrl').value:'',pay_type:document.getElementById('sPayType').value,driver_rate:parseFloat(document.getElementById('sDriverRate').value)||0,sideman_rate:parseFloat(document.getElementById('sSidemanRate').value)||0,monthly_salary:parseFloat(document.getElementById('sMonthlySalary').value)||0};
+  var existingId=document.getElementById('staffId').value;
+  var p=existingId?sbUpdate('tr_staff',existingId,data):sbPost('tr_staff',data);
+  p.then(function(result){
+    var saved=Array.isArray(result)?result[0]:result;
+    if(existingId){var idx=allStaff.findIndex(function(s){return s.id===existingId;});if(idx>=0)allStaff[idx]=Object.assign({id:existingId},data);}
+    else if(saved&&saved.id)allStaff.unshift(saved);
+    renderStaff();closeStaffDrawer();showToast(existingId?'Staff updated ✓':'Staff added ✓');
+  }).catch(function(){showToast('Failed to save','error');});
+};
+window.deleteStaff=function(){
+  if(!currentStaff||!confirm('Remove '+currentStaff.name+'?'))return;
+  sbDelete('tr_staff',currentStaff.id).then(function(){allStaff=allStaff.filter(function(s){return s.id!==currentStaff.id;});renderStaff();closeStaffDrawer();showToast('Staff removed');});
+};
+function closeStaffDrawer(){try{document.getElementById('staffOverlay').classList.remove('open');}catch(e){}try{document.getElementById('staffDrawer').classList.remove('open');}catch(e){}currentStaff=null;}
+try{document.getElementById('staffOverlay').onclick=closeStaffDrawer;}catch(e){}
+
+// ══ SALARY ══
+function renderSalary(){
+  var monthEl=document.getElementById('salaryMonth');
+  var now=new Date();
+  if(!monthEl.value)monthEl.value=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
+  var ym=monthEl.value;
+  var monthTrips=allTrips.filter(function(t){return t.trip_date&&t.trip_date.startsWith(ym)&&t.status!=='Cancelled';});
+
+  // Per-trip staff
+  var perTrip=allStaff.filter(function(s){return s.pay_type==='per_trip';});
+  document.getElementById('salaryTripBody').innerHTML=perTrip.length===0?'<tr><td colspan="7" class="empty-state">No per-trip staff.</td></tr>':
+    perTrip.map(function(s,i){
+      var asDriver=monthTrips.filter(function(t){return t.driver_name===s.name;}).length;
+      var asSideman=monthTrips.filter(function(t){return t.sideman_name===s.name;}).length;
+      var earned=(asDriver*(s.driver_rate||0))+(asSideman*(s.sideman_rate||0));
+      return '<tr>'+
+        '<td><div style="display:flex;align-items:center;gap:0.6rem"><div class="worker-avatar" style="'+avStyle(i)+';width:32px;height:32px;font-size:11px">'+initials(s.name)+'</div><div class="t-name">'+s.name+'</div></div></td>'+
+        '<td><span class="badge b-driver">'+s.role+'</span></td>'+
+        '<td><strong>'+asDriver+'</strong><div class="t-sub">@ JMD '+(s.driver_rate||0).toLocaleString()+'</div></td>'+
+        '<td><strong>'+asSideman+'</strong><div class="t-sub">@ JMD '+(s.sideman_rate||0).toLocaleString()+'</div></td>'+
+        '<td class="t-sub">D: JMD '+(s.driver_rate||0).toLocaleString()+' | SM: JMD '+(s.sideman_rate||0).toLocaleString()+'</td>'+
+        '<td><strong style="color:var(--green)">'+fmtMoney(earned)+'</strong></td>'+
+        '<td><button class="btn-sm green" data-sal-id="'+s.id+'" data-sal-amt="'+earned+'">Mark Paid</button></td>'+
+      '</tr>';
+    }).join('');
+  document.getElementById('salaryTripBody').querySelectorAll('[data-sal-id]').forEach(function(btn){
+    btn.onclick=function(){openSalaryDrawer(btn.dataset.salId,btn.dataset.salAmt);};
+  });
+
+  // Monthly staff
+  var monthly=allStaff.filter(function(s){return s.pay_type==='monthly';});
+  document.getElementById('salaryMonthlyBody').innerHTML=monthly.length===0?'<tr><td colspan="5" class="empty-state">No monthly staff.</td></tr>':
+    monthly.map(function(s,i){
+      return '<tr>'+
+        '<td><div style="display:flex;align-items:center;gap:0.6rem"><div class="worker-avatar" style="'+avStyle(i+5)+';width:32px;height:32px;font-size:11px">'+initials(s.name)+'</div><div class="t-name">'+s.name+'</div></div></td>'+
+        '<td><span class="badge b-office">'+s.role+'</span></td>'+
+        '<td><strong style="color:var(--green)">'+fmtMoney(s.monthly_salary)+'</strong></td>'+
+        '<td><span class="badge '+(s.status==='Active'?'b-active':'b-inactive')+'">'+s.status+'</span></td>'+
+        '<td><button class="btn-sm green" data-sal-id="'+s.id+'" data-sal-amt="'+( s.monthly_salary||0)+'">Mark Paid</button></td>'+
+      '</tr>';
+    }).join('');
+  document.getElementById('salaryMonthlyBody').querySelectorAll('[data-sal-id]').forEach(function(btn){
+    btn.onclick=function(){openSalaryDrawer(btn.dataset.salId,btn.dataset.salAmt);};
+  });
+}
+try{document.getElementById('salaryMonth').onchange=renderSalary;}catch(e){}
+
+function openSalaryDrawer(staffId,amount){
+  var staff=allStaff.find(function(s){return s.id===staffId;});
+  if(!staff)return;
+  document.getElementById('salaryDrwTitle').textContent='Pay '+staff.name;
+  document.getElementById('salaryDrwBody').innerHTML=
+    '<div class="drw-note">Recording salary payment for <strong>'+staff.name+'</strong>.</div>'+
+    '<div class="drw-section">'+
+    '<div class="drw-row"><span class="drw-lbl">Amount Due</span><span class="drw-val">'+fmtMoney(parseFloat(amount)||0)+'</span></div>'+
+    '</div>'+
+    '<div class="sf"><label>Amount Paid (JMD)</label><input class="field-input" id="sal-amt-input" type="number" value="'+amount+'" /></div>'+
+    '<div class="sf"><label>Payment Method</label><select class="field-input" id="sal-method"><option value="Cash">Cash</option><option value="Bank Transfer">Bank Transfer</option></select></div>'+
+    '<div class="sf"><label>Notes (optional)</label><input class="field-input" id="sal-notes" placeholder="e.g. March salary" /></div>'+
+    '<button class="drw-btn green" onclick="recordSalaryPayment(\''+staffId+'\',\''+staff.name+'\')">💰 Record Payment & Add to Expenses</button>'+
+    '<button class="drw-btn outline" onclick="closeSalaryDrawer()">Cancel</button>';
+  try{document.getElementById('salaryOverlay').classList.add('open');}catch(e){}
+  try{document.getElementById('salaryDrawer').classList.add('open');}catch(e){}
+}
+window.recordSalaryPayment=function(staffId,name){
+  var amt=parseFloat(document.getElementById('sal-amt-input').value)||0;
+  var method=document.getElementById('sal-method').value;
+  var notes=document.getElementById('sal-notes').value;
+  var data={trip_date:new Date().toISOString().split('T')[0],category:'Salary',description:'Salary: '+name+(notes?' - '+notes:''),amount:amt,truck_id:'',notes:method};
+  sbPost('tr_expenses',data).then(function(result){
+    var saved=Array.isArray(result)?result[0]:result;
+    if(saved&&saved.id)allExpenses.unshift(saved);
+    closeSalaryDrawer();showToast('Payment recorded and added to expenses ✓');
+  }).catch(function(){showToast('Failed to record','error');});
+};
+function closeSalaryDrawer(){try{document.getElementById('salaryOverlay').classList.remove('open');}catch(e){}try{document.getElementById('salaryDrawer').classList.remove('open');}catch(e){}}
+try{document.getElementById('salaryOverlay').onclick=closeSalaryDrawer;}catch(e){}
+
+// ══ EXPENSES ══
+var currentExp=null;
+
+function loadExpenses(){
+  return sbGet('tr_expenses').then(function(data){allExpenses=Array.isArray(data)?data:[];renderExpenses();return allExpenses;}).catch(function(){allExpenses=[];renderExpenses();return[];});
+}
+
+function renderExpenses(){
+  var tbody=document.getElementById('expTableBody');
+  if(!tbody)return;
+  if(allExpenses.length===0){tbody.innerHTML='<tr><td colspan="6" class="empty-state">No expenses logged yet.</td></tr>';return;}
+  tbody.innerHTML=allExpenses.map(function(e){
+    return '<tr><td class="t-sub">'+fmtDate(e.trip_date||e.created_at)+'</td>'+
+      '<td><span class="badge b-pending">'+e.category+'</span></td>'+
+      '<td>'+e.description+'</td>'+
+      '<td class="t-sub">'+(e.truck_id||'—')+'</td>'+
+      '<td><strong>'+fmtMoney(e.amount)+'</strong></td>'+
+      '<td><button class="btn-sm blue" data-exp-id="'+e.id+'">Edit</button></td>'+
+    '</tr>';
+  }).join('');
+  tbody.querySelectorAll('[data-exp-id]').forEach(function(btn){btn.onclick=function(){openExpenseDrawer(btn.dataset.expId);};});
+
+  // Category chart
+  var cats={};
+  allExpenses.forEach(function(e){cats[e.category]=(cats[e.category]||0)+e.amount;});
+  var total=Object.values(cats).reduce(function(a,b){return a+b;},0);
+  var sorted=Object.entries(cats).sort(function(a,b){return b[1]-a[1];});
+  var chart=document.getElementById('expCatChart');
+  if(chart){
+    chart.innerHTML=sorted.map(function(entry){
+      var pct=total>0?Math.round(entry[1]/total*100):0;
+      return '<div class="exp-cat-bar"><div class="exp-cat-label">'+entry[0]+'</div><div class="exp-cat-track"><div class="exp-cat-fill" style="width:'+pct+'%"></div></div><div class="exp-cat-amt">JMD '+Math.round(entry[1]/1000)+'k</div></div>';
+    }).join('')||'<div class="t-sub">No data</div>';
+  }
+  // Summary
+  var catMap={Fuel:'exp-fuel',Maintenance:'exp-maint',Salary:'exp-salary',Tax:'exp-tax'};
+  Object.keys(catMap).forEach(function(cat){var el=document.getElementById(catMap[cat]);if(el)el.textContent=fmtMoney(cats[cat]||0);});
+  var otherTotal=Object.entries(cats).filter(function(e){return!Object.keys(catMap).includes(e[0]);}).reduce(function(a,e){return a+e[1];},0);
+  var otherEl=document.getElementById('exp-other');if(otherEl)otherEl.textContent=fmtMoney(otherTotal);
+  var totalEl=document.getElementById('exp-total');if(totalEl)totalEl.textContent=fmtMoney(total);
+
+  // Truck selector in drawer
+  var expTruckSel=document.getElementById('expTruck');
+  if(expTruckSel){expTruckSel.innerHTML='<option value="">All / General</option>'+allFleet.map(function(f){return '<option value="'+f.truck_id+'">'+f.truck_id+'</option>';}).join('');}
+}
+
+function openExpenseDrawer(id){
+  var exp=id?allExpenses.find(function(e){return e.id===id;}):null;
+  currentExp=exp;
+  document.getElementById('expDrwTitle').textContent=exp?'Edit Expense':'Add Expense';
+  document.getElementById('expId').value=exp?exp.id:'';
+  document.getElementById('expDate').value=exp?(exp.trip_date||''):new Date().toISOString().split('T')[0];
+  document.getElementById('expCat').value=exp?exp.category||'Fuel':'Fuel';
+  document.getElementById('expDesc').value=exp?exp.description||'':'';
+  document.getElementById('expAmt').value=exp?exp.amount||'':'';
+  document.getElementById('expDeleteBtn').style.display=exp?'flex':'none';
+  try{document.getElementById('expOverlay').classList.add('open');}catch(e){}
+  try{document.getElementById('expDrawer').classList.add('open');}catch(e){}
+}
+window.saveExpense=function(){
+  var data={trip_date:document.getElementById('expDate').value,category:document.getElementById('expCat').value,description:document.getElementById('expDesc').value.trim(),truck_id:document.getElementById('expTruck').value,amount:parseFloat(document.getElementById('expAmt').value)||0};
+  var existingId=document.getElementById('expId').value;
+  var p=existingId?sbUpdate('tr_expenses',existingId,data):sbPost('tr_expenses',data);
+  p.then(function(result){
+    var saved=Array.isArray(result)?result[0]:result;
+    if(existingId){var idx=allExpenses.findIndex(function(e){return e.id===existingId;});if(idx>=0)allExpenses[idx]=Object.assign({id:existingId},data);}
+    else if(saved&&saved.id)allExpenses.unshift(saved);
+    renderExpenses();closeExpDrawer();showToast(existingId?'Expense updated ✓':'Expense added ✓');
+  }).catch(function(){showToast('Failed','error');});
+};
+window.deleteExpense=function(){
+  if(!currentExp||!confirm('Delete this expense?'))return;
+  sbDelete('tr_expenses',currentExp.id).then(function(){allExpenses=allExpenses.filter(function(e){return e.id!==currentExp.id;});renderExpenses();closeExpDrawer();showToast('Deleted');});
+};
+function closeExpDrawer(){try{document.getElementById('expOverlay').classList.remove('open');}catch(e){}try{document.getElementById('expDrawer').classList.remove('open');}catch(e){}currentExp=null;}
+try{document.getElementById('expOverlay').onclick=closeExpDrawer;}catch(e){}
+
+// ══ RECURRING ══
+var currentRec=null;
+
+function loadRecurring(){
+  return sbGet('tr_recurring').then(function(data){allRecurring=Array.isArray(data)?data:[];renderRecurring();return allRecurring;}).catch(function(){allRecurring=[];renderRecurring();return[];});
+}
+
+function renderRecurring(){
+  var tbody=document.getElementById('recurringTableBody');
+  if(!tbody)return;
+  if(allRecurring.length===0){tbody.innerHTML='<tr><td colspan="7" class="empty-state">No recurring expenses set up.</td></tr>';return;}
+  var today=new Date();
+  tbody.innerHTML=allRecurring.map(function(r){
+    var dueDay=parseInt(r.due_day)||1;
+    var now=new Date();
+    var nextDue=new Date(now.getFullYear(),now.getMonth(),dueDay);
+    if(nextDue<today)nextDue=new Date(now.getFullYear(),now.getMonth()+1,dueDay);
+    var diff=Math.ceil((nextDue-today)/(1000*60*60*24));
+    var statusBadge=diff<=0?'<span class="badge b-overdue">Overdue</span>':diff<=7?'<span class="badge b-pending">Due Soon</span>':'<span class="badge b-active">OK</span>';
+    return '<tr>'+
+      '<td><div class="t-name">'+r.name+'</div></td>'+
+      '<td><span class="badge b-pending">'+r.category+'</span></td>'+
+      '<td><strong>'+fmtMoney(r.amount)+'</strong></td>'+
+      '<td class="t-sub">Day '+r.due_day+' of month</td>'+
+      '<td class="t-sub">'+fmtDate(nextDue.toISOString())+'</td>'+
+      '<td>'+statusBadge+'</td>'+
+      '<td style="display:flex;gap:0.3rem">'+
+        '<button class="btn-sm green" onclick="markRecurringPaid(\''+r.id+'\',\''+r.name+'\','+r.amount+')">✓ Paid</button>'+
+        '<button class="btn-sm blue" data-rec-id="'+r.id+'">Edit</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  tbody.querySelectorAll('[data-rec-id]').forEach(function(btn){btn.onclick=function(){openRecurringDrawer(btn.dataset.recId);};});
+}
+
+window.markRecurringPaid=function(id,name,amount){
+  if(!confirm('Mark "'+name+'" as paid and add JMD '+Number(amount).toLocaleString()+' to expenses?'))return;
+  var data={trip_date:new Date().toISOString().split('T')[0],category:'Recurring',description:name+' (recurring)',amount:parseFloat(amount)||0,truck_id:''};
+  sbPost('tr_expenses',data).then(function(result){
+    var saved=Array.isArray(result)?result[0]:result;
+    if(saved&&saved.id)allExpenses.unshift(saved);
+    renderExpenses();showToast(name+' marked paid and added to expenses ✓');
+  }).catch(function(){showToast('Failed','error');});
+};
+function openRecurringDrawer(id){
+  var rec=id?allRecurring.find(function(r){return r.id===id;}):null;
+  currentRec=rec;
+  document.getElementById('recDrwTitle').textContent=rec?'Edit Recurring':'Add Recurring Expense';
+  document.getElementById('recId').value=rec?rec.id:'';
+  document.getElementById('recName').value=rec?rec.name||'':'';
+  document.getElementById('recCat').value=rec?rec.category||'Insurance':'Insurance';
+  document.getElementById('recAmt').value=rec?rec.amount||'':'';
+  document.getElementById('recDay').value=rec?rec.due_day||'':'';
+  document.getElementById('recEmail').value=rec?rec.reminder_email||companySettings.notify_email||'':'';
+  document.getElementById('recRemind').value=rec?rec.remind_days||3:3;
+  document.getElementById('recDeleteBtn').style.display=rec?'flex':'none';
+  try{document.getElementById('recOverlay').classList.add('open');}catch(e){}
+  try{document.getElementById('recDrawer').classList.add('open');}catch(e){}
+}
+window.saveRecurring=function(){
+  var data={name:document.getElementById('recName').value.trim(),category:document.getElementById('recCat').value,amount:parseFloat(document.getElementById('recAmt').value)||0,due_day:parseInt(document.getElementById('recDay').value)||1,reminder_email:document.getElementById('recEmail').value.trim(),remind_days:parseInt(document.getElementById('recRemind').value)||3};
+  var existingId=document.getElementById('recId').value;
+  var p=existingId?sbUpdate('tr_recurring',existingId,data):sbPost('tr_recurring',data);
+  p.then(function(result){
+    var saved=Array.isArray(result)?result[0]:result;
+    if(existingId){var idx=allRecurring.findIndex(function(r){return r.id===existingId;});if(idx>=0)allRecurring[idx]=Object.assign({id:existingId},data);}
+    else if(saved&&saved.id)allRecurring.unshift(saved);
+    renderRecurring();closeRecDrawer();showToast(existingId?'Updated ✓':'Recurring expense added ✓');
+  }).catch(function(){showToast('Failed','error');});
+};
+window.deleteRecurring=function(){
+  if(!currentRec||!confirm('Delete?'))return;
+  sbDelete('tr_recurring',currentRec.id).then(function(){allRecurring=allRecurring.filter(function(r){return r.id!==currentRec.id;});renderRecurring();closeRecDrawer();showToast('Deleted');});
+};
+function closeRecDrawer(){try{document.getElementById('recOverlay').classList.remove('open');}catch(e){}try{document.getElementById('recDrawer').classList.remove('open');}catch(e){}currentRec=null;}
+try{document.getElementById('recOverlay').onclick=closeRecDrawer;}catch(e){}
+
+// Financials tab switching
+document.querySelectorAll('.fin-tab').forEach(function(tab){
+  tab.onclick=function(){
+    document.querySelectorAll('.fin-tab').forEach(function(t){t.classList.remove('active');});
+    document.querySelectorAll('.fin-section').forEach(function(s){s.classList.remove('active');});
+    tab.classList.add('active');
+    var sec=document.getElementById('fin-'+tab.dataset.ft);if(sec)sec.classList.add('active');
+  };
+});
+
+function renderFinancials(){
+  renderRevenue();renderExpenses();renderRecurring();renderSummary();
+}
+
+function renderRevenue(){
+  var tbody=document.getElementById('revTableBody');
+  if(!tbody)return;
+  if(allTrips.length===0){tbody.innerHTML='<tr><td colspan="8" class="empty-state">No trips logged yet.</td></tr>';return;}
+  var total=0,collected=0;
+  allTrips.forEach(function(t){if(t.status!=='Cancelled'){total+=parseFloat(t.revenue)||0;collected+=parseFloat(t.amount_paid)||0;}});
+  var outstanding=total-collected;
+  var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('rev-total',fmtMoney(total));setEl('rev-collected',fmtMoney(collected));setEl('rev-outstanding',fmtMoney(outstanding));
+  tbody.innerHTML=allTrips.filter(function(t){return t.status!=='Cancelled';}).map(function(t){
+    var rev=parseFloat(t.revenue)||0,paid=parseFloat(t.amount_paid)||0,out=rev-paid;
+    return '<tr>'+
+      '<td><span class="t-ref">'+t.ref+'</span></td>'+
+      '<td class="t-sub">'+fmtDate(t.trip_date)+'</td>'+
+      '<td class="t-sub">'+(t.service_type||'—')+'</td>'+
+      '<td class="t-sub">'+(t.client||'—')+'</td>'+
+      '<td><strong>'+fmtMoney(rev)+'</strong></td>'+
+      '<td style="color:var(--green)">'+fmtMoney(paid)+'</td>'+
+      '<td style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtMoney(out)+'</td>'+
+      '<td class="t-sub">'+(t.payment_method||'—')+'</td>'+
+    '</tr>';
+  }).join('');
+}
+
+function renderSummary(){
+  var tbody=document.getElementById('summaryTableBody');
+  if(!tbody)return;
+  var monthMap={};
+  allTrips.forEach(function(t){if(!t.trip_date||t.status==='Cancelled')return;var ym=t.trip_date.substring(0,7);if(!monthMap[ym])monthMap[ym]={rev:0,exp:0};monthMap[ym].rev+=parseFloat(t.revenue)||0;});
+  allExpenses.forEach(function(e){var d=e.trip_date||e.created_at;if(!d)return;var ym=d.substring(0,7);if(!monthMap[ym])monthMap[ym]={rev:0,exp:0};monthMap[ym].exp+=parseFloat(e.amount)||0;});
+  var months=Object.keys(monthMap).sort().reverse();
+  if(months.length===0){tbody.innerHTML='<tr><td colspan="5" class="empty-state">No data yet.</td></tr>';return;}
+  var totalRev=0,totalExp=0;
+  months.forEach(function(m){totalRev+=monthMap[m].rev;totalExp+=monthMap[m].exp;});
+  var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('sum-revenue',fmtMoney(totalRev));setEl('sum-expenses',fmtMoney(totalExp));
+  var profit=totalRev-totalExp;
+  var profEl=document.getElementById('sum-profit');
+  if(profEl){profEl.textContent=fmtMoney(Math.abs(profit));profEl.style.color=profit>=0?'var(--green)':'var(--red)';}
+  tbody.innerHTML=months.map(function(ym){
+    var r=monthMap[ym].rev,e=monthMap[ym].exp,p=r-e;
+    var d=new Date(ym+'-01');var mNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '<tr>'+
+      '<td><strong>'+mNames[d.getMonth()]+' '+d.getFullYear()+'</strong></td>'+
+      '<td style="color:var(--green)">'+fmtMoney(r)+'</td>'+
+      '<td style="color:var(--red)">'+fmtMoney(e)+'</td>'+
+      '<td style="color:'+(p>=0?'var(--green)':'var(--red)')+'"><strong>'+fmtMoney(Math.abs(p))+(p<0?' (Loss)':'')+' </strong></td>'+
+      '<td class="t-sub">'+(r>0?Math.round(p/r*100)+'%':'—')+'</td>'+
+    '</tr>';
+  }).join('');
+}
+
+// ══ PAYSLIPS ══
+var payslipData=null;
+
+function loadPayslipHistory(){
+  sbGet('tr_payslips').then(function(data){
+    var tbody=document.getElementById('payslipHistoryBody');
+    if(!tbody)return;
+    var list=Array.isArray(data)?data:[];
+    if(list.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty-state">No payslips uploaded yet.</td></tr>';return;}
+    tbody.innerHTML=list.map(function(p){
+      return '<tr><td class="t-sub">'+fmtDate(p.created_at)+'</td><td>'+(p.client||'—')+'</td><td>'+(p.trip_count||'—')+'</td><td><strong>'+fmtMoney(p.total_amount)+'</strong></td></tr>';
+    }).join('');
+  }).catch(function(){});
+}
+
+window.handlePayslipUpload=function(input){
+  var file=input.files[0];
+  if(!file)return;
+  var preview=document.getElementById('uploadPreview');
+  var img=document.getElementById('uploadedImg');
+  var status=document.getElementById('uploadStatus');
+  var statusText=document.getElementById('uploadStatusText');
+  var progress=document.getElementById('uploadProgress');
+
+  // Show preview
+  var reader=new FileReader();
+  reader.onload=function(e){
+    img.src=e.target.result;
+    preview.style.display='block';
+    status.style.display='block';
+    statusText.textContent='Reading payslip with AI...';
+    progress.style.width='30%';
+
+    // Send to Claude API for extraction
+    var base64=e.target.result.split(',')[1];
+    var mediaType=file.type||'image/jpeg';
+
+    fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+            {type:'text',text:'This is a trucking payslip. Extract: 1) Client/company name, 2) List of trips with dates and amounts, 3) Total amount. Respond ONLY in JSON: {"client":"","trips":[{"date":"","description":"","amount":0}],"total":0,"notes":""}'}
+          ]
+        }]
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      progress.style.width='100%';
+      statusText.textContent='Done!';
+      var text=data.content&&data.content[0]?data.content[0].text:'';
+      try{
+        var clean=text.replace(/```json|```/g,'').trim();
+        payslipData=JSON.parse(clean);
+        showPayslipResult(payslipData);
+      }catch(err){
+        statusText.textContent='Could not parse response. Please enter manually.';
+        payslipData={client:'',trips:[],total:0,notes:text};
+        showPayslipResult(payslipData);
+      }
+    })
+    .catch(function(err){
+      progress.style.width='100%';
+      statusText.textContent='AI reading failed — please enter details manually below.';
+      showPayslipResult({client:'',trips:[],total:0,notes:'Manual entry required'});
+    });
+  };
+  reader.readAsDataURL(file);
+};
+
+function showPayslipResult(data){
+  var card=document.getElementById('payslipResultCard');
+  var result=document.getElementById('payslipResult');
+  card.style.display='block';
+  result.innerHTML=
+    '<div class="sf"><label>Client / Company</label><input class="field-input" id="ps-client" value="'+(data.client||'')+'" /></div>'+
+    '<div class="sf"><label>Total Amount (JMD)</label><input class="field-input" id="ps-total" type="number" value="'+(data.total||0)+'" /></div>'+
+    '<div class="sf"><label>Number of Trips</label><input class="field-input" id="ps-trips" type="number" value="'+(data.trips?data.trips.length:0)+'" /></div>'+
+    '<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);margin-bottom:0.4rem;margin-top:0.4rem">Trips Extracted</div>'+
+    (data.trips&&data.trips.length>0?
+      '<div style="background:var(--bg);border-radius:4px;padding:0.6rem;font-size:12px;max-height:150px;overflow-y:auto">'+
+        data.trips.map(function(t){return '<div class="drw-row"><span>'+( t.date||'')+(t.description?' — '+t.description:'')+'</span><strong>JMD '+(t.amount||0).toLocaleString()+'</strong></div>';}).join('')+
+      '</div>':
+      '<div class="t-sub">No trips extracted. You can still save the total manually.</div>'
+    )+
+    (data.notes?'<div class="drw-note" style="margin-top:0.6rem;font-size:11px">'+data.notes+'</div>':'');
+}
+
+window.savePayslipData=function(){
+  if(!payslipData&&!document.getElementById('ps-client'))return;
+  var data={
+    client:document.getElementById('ps-client')?document.getElementById('ps-client').value:'',
+    trip_count:document.getElementById('ps-trips')?parseInt(document.getElementById('ps-trips').value)||0:0,
+    total_amount:document.getElementById('ps-total')?parseFloat(document.getElementById('ps-total').value)||0:0
+  };
+  // Save to payslips table
+  sbPost('tr_payslips',data).then(function(){
+    // Also add to revenue (create trip entries)
+    showToast('Payslip saved ✓ — add individual trips in the Trips tab');
+    loadPayslipHistory();
+    resetPayslip();
+  }).catch(function(){showToast('Failed to save payslip','error');});
+};
+
+window.resetPayslip=function(){
+  document.getElementById('uploadPreview').style.display='none';
+  document.getElementById('uploadStatus').style.display='none';
+  document.getElementById('payslipResultCard').style.display='none';
+  document.getElementById('payslipFile').value='';
+  payslipData=null;
+};
+
+// ══ SETTINGS ══
+function loadSettings(){
+  sbGet('tr_settings','limit=1').then(function(data){
+    var s=(Array.isArray(data)&&data[0])?data[0]:{};
+    companySettings=s;
+    var map={company:'set-company',trading:'set-trading',phone:'set-phone',email:'set-email',notify_email:'set-notify-email'};
+    Object.keys(map).forEach(function(k){var el=document.getElementById(map[k]);if(el&&s[k])el.value=s[k];});
+  }).catch(function(){});
+  loadUsers();
+}
+window.saveSettings=function(){
+  var data={id:1,company:document.getElementById('set-company').value,trading:document.getElementById('set-trading').value,phone:document.getElementById('set-phone').value,email:document.getElementById('set-email').value,notify_email:document.getElementById('set-notify-email').value};
+  companySettings=data;
+  sbUpsert('tr_settings',data).then(function(){showToast('Settings saved ✓');}).catch(function(){showToast('Failed to save','error');});
+};
+
+// Users
+var allUsers=[];
+var currentUser2=null;
+var allTabs=['overview','trips','fleet','staff','salary','financials','payslips','settings'];
+
+function loadUsers(){
+  var stored=JSON.parse(localStorage.getItem('pi-trucking-users')||'[]');
+  allUsers=stored;
+  renderUsers();
+}
+function renderUsers(){
+  var tbody=document.getElementById('usersTableBody');
+  if(!tbody)return;
+  var rows=[{username:'admin',name:'Admin (Owner)',access:allTabs.join(', ')}];
+  allUsers.forEach(function(u){rows.push({username:u.username,name:u.name,access:(u.access||[]).join(', ')});});
+  tbody.innerHTML=rows.map(function(u,i){
+    return '<tr><td class="t-name">'+u.name+'</td><td class="t-sub">'+u.username+'</td><td><div class="t-sub" style="max-width:180px;white-space:normal;font-size:11px">'+u.access+'</div></td>'+
+      (i===0?'<td><span class="t-sub">Owner</span></td>':'<td><button class="btn-sm blue" data-user-name="'+u.username+'">Edit</button></td>')+
+    '</tr>';
+  }).join('');
+  tbody.querySelectorAll('[data-user-name]').forEach(function(btn){
+    btn.onclick=function(){
+      var u=allUsers.find(function(x){return x.username===btn.dataset.userName;});
+      if(u)openUserDrawer2(u);
+    };
+  });
+}
+function openUserDrawer(id){openUserDrawer2(null);}
+function openUserDrawer2(user){
+  currentUser2=user;
+  document.getElementById('userDrwTitle').textContent=user?'Edit User':'Add User';
+  document.getElementById('userId').value=user?user.username:'';
+  document.getElementById('uName').value=user?user.name:'';
+  document.getElementById('uUsername').value=user?user.username:'';
+  document.getElementById('uPassword').value='';
+  var access=user?user.access:[];
+  document.getElementById('accessCheckboxes').innerHTML=allTabs.map(function(tab){
+    return '<label style="display:flex;align-items:center;gap:0.4rem;font-size:13px;cursor:pointer">'+
+      '<input type="checkbox" value="'+tab+'"'+(access.includes(tab)?' checked':'')+' style="accent-color:var(--navy)"> '+
+      tab.charAt(0).toUpperCase()+tab.slice(1)+'</label>';
+  }).join('');
+  document.getElementById('userDeleteBtn').style.display=user?'flex':'none';
+  try{document.getElementById('userOverlay').classList.add('open');}catch(e){}
+  try{document.getElementById('userDrawer').classList.add('open');}catch(e){}
+}
+window.saveUser=function(){
+  var name=document.getElementById('uName').value.trim();
+  var username=document.getElementById('uUsername').value.trim().toLowerCase();
+  var password=document.getElementById('uPassword').value;
+  if(!name||!username){showToast('Please enter name and username','error');return;}
+  var access=[];
+  document.querySelectorAll('#accessCheckboxes input:checked').forEach(function(cb){access.push(cb.value);});
+  var userData={name:name,username:username,password:password||( currentUser2?currentUser2.password:''),access:access};
+  if(currentUser2){allUsers=allUsers.filter(function(u){return u.username!==currentUser2.username;});}
+  allUsers.push(userData);
+  localStorage.setItem('pi-trucking-users',JSON.stringify(allUsers));
+  renderUsers();closeUserDrawer();showToast(currentUser2?'User updated ✓':'User added ✓');
+};
+window.deleteUser=function(){
+  if(!currentUser2||!confirm('Delete user '+currentUser2.username+'?'))return;
+  allUsers=allUsers.filter(function(u){return u.username!==currentUser2.username;});
+  localStorage.setItem('pi-trucking-users',JSON.stringify(allUsers));
+  renderUsers();closeUserDrawer();showToast('User deleted');
+};
+function closeUserDrawer(){try{document.getElementById('userOverlay').classList.remove('open');}catch(e){}try{document.getElementById('userDrawer').classList.remove('open');}catch(e){}currentUser2=null;}
+try{document.getElementById('userOverlay').onclick=closeUserDrawer;}catch(e){}
+
+// ══ OVERVIEW ══
+function loadOverview(){
+  var now=new Date();
+  var thisMonth=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
+  var monthTrips=allTrips.filter(function(t){return t.trip_date&&t.trip_date.startsWith(thisMonth);});
+  var monthRev=monthTrips.reduce(function(a,t){return a+(parseFloat(t.revenue)||0);},0);
+
+  var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('ov-trips',allTrips.length);
+  setEl('ov-trips-sub',monthTrips.length+' this month');
+  setEl('ov-revenue',monthRev>0?'JMD '+Math.round(monthRev/1000)+'k':'—');
+  setEl('ov-staff',allStaff.filter(function(s){return s.status==='Active';}).length);
+
+  // Maintenance alerts
+  var today=new Date();
+  var maintAlerts=0;
+  allFleet.forEach(function(f){
+    var maint=Array.isArray(f.maintenance)?f.maintenance:[];
+    maint.forEach(function(m){
+      if(!m.next_due)return;
+      var diff=Math.ceil((new Date(m.next_due)-today)/(1000*60*60*24));
+      if(diff<=14)maintAlerts++;
+    });
+  });
+  setEl('ov-maint',maintAlerts);
+
+  // Alerts banner
+  var alertsEl=document.getElementById('ovAlerts');
+  if(alertsEl){
+    var alerts=[];
+    var today2=new Date();
+    allFleet.forEach(function(f){
+      var maint=Array.isArray(f.maintenance)?f.maintenance:[];
+      maint.forEach(function(m){
+        if(!m.next_due)return;
+        var diff=Math.ceil((new Date(m.next_due)-today2)/(1000*60*60*24));
+        if(diff<0)alerts.push({type:'error',msg:'⚠️ '+f.truck_id+': '+m.name+' is OVERDUE by '+Math.abs(diff)+' days'});
+        else if(diff<=7)alerts.push({type:'warn',msg:'🔔 '+f.truck_id+': '+m.name+' due in '+diff+' days'});
+      });
+    });
+    allRecurring.forEach(function(r){
+      var dueDay=parseInt(r.due_day)||1;
+      var n=new Date();var nextDue=new Date(n.getFullYear(),n.getMonth(),dueDay);
+      if(nextDue<today2)nextDue=new Date(n.getFullYear(),n.getMonth()+1,dueDay);
+      var diff=Math.ceil((nextDue-today2)/(1000*60*60*24));
+      if(diff<=3)alerts.push({type:'warn',msg:'💳 Recurring payment due: '+r.name+' — JMD '+Number(r.amount).toLocaleString()+' in '+diff+' days'});
+    });
+    alertsEl.innerHTML=alerts.slice(0,3).map(function(a){return '<div class="alert-banner '+a.type+'">'+a.msg+'</div>';}).join('');
+  }
+
+  // Recent trips table
+  var tbody=document.getElementById('ovTripsTable');
+  if(tbody){
+    var recent=allTrips.slice(0,5);
+    var statusColors={'Scheduled':'b-pending','In Progress':'b-active','Completed':'b-done','Cancelled':'b-inactive'};
+    tbody.innerHTML=recent.length===0?'<tr><td colspan="6" class="empty-state">No trips yet.</td></tr>':
+      recent.map(function(t){
+        return '<tr><td><span class="t-ref">'+t.ref+'</span></td><td>'+(t.truck_id||'—')+'</td><td class="t-sub">'+(t.driver_name||'—')+'</td><td class="t-sub">'+(t.service_type||'—')+'</td><td><strong>'+fmtMoney(t.revenue)+'</strong></td><td><span class="badge '+(statusColors[t.status]||'b-pending')+'">'+t.status+'</span></td></tr>';
+      }).join('');
+  }
+
+  // Fleet status
+  var fleetEl=document.getElementById('ovFleetStatus');
+  if(fleetEl){
+    if(allFleet.length===0){fleetEl.innerHTML='<div class="t-sub">No trucks added yet.</div>';return;}
+    fleetEl.innerHTML=allFleet.map(function(f){
+      var tripCount=allTrips.filter(function(t){return t.truck_id===f.truck_id&&t.trip_date&&t.trip_date.startsWith(thisMonth);}).length;
+      var statusColor=f.status==='Active'?'var(--green)':f.status==='In Shop'?'var(--orange)':'var(--red)';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;border-bottom:1px solid var(--border)">'+
+        '<div><div style="font-weight:600">'+f.truck_id+'</div><div class="t-sub">'+f.plate+' · '+tripCount+' trips this month</div></div>'+
+        '<div style="display:flex;align-items:center;gap:0.5rem"><div style="width:8px;height:8px;border-radius:50%;background:'+statusColor+'"></div><div style="font-size:12px;color:var(--muted)">'+f.status+'</div></div>'+
+      '</div>';
+    }).join('');
+  }
+}
+
+// ══ INIT ══
+function initDashboard(){
+  var now=new Date();
+  var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var el=document.getElementById('ovDate');
+  if(el)el.textContent=days[now.getDay()]+', '+months[now.getMonth()]+' '+now.getDate()+', '+now.getFullYear();
+  var h=now.getHours();
+  var greet=document.getElementById('ovGreeting');
+  if(greet)greet.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', Admin 👋';
+
+  setInterval(function(){
+    var n=new Date();var hh=n.getHours();var mm=String(n.getMinutes()).padStart(2,'0');
+    var el=document.getElementById('tbTime');if(el)el.textContent=(hh>12?hh-12:hh||12)+':'+mm+(hh>=12?' PM':' AM');
+  },1000);
+
+  Promise.all([loadTrips(),loadFleet(),loadStaff(),loadExpenses(),loadRecurring()]).then(function(){
+    loadOverview();
+  });
+
+  setInterval(function(){loadTrips().then(function(){loadOverview();});},60000);
+}
+</script>
+</body>
+</html>
