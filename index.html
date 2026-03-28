@@ -453,12 +453,10 @@
             <div class="sf"><label>Full Name</label><input id="sName" placeholder="e.g. Marcus Brown" /></div>
             <div class="sf-row">
               <div class="sf"><label>Role</label>
-                <select id="sRole">
-                  <option value="Driver">Driver</option>
-                  <option value="Sideman">Sideman</option>
-                  <option value="Office">Office</option>
-                  <option value="Manager">Manager</option>
-                </select>
+                <div style="display:flex;gap:0.4rem;align-items:center">
+                  <select id="sRole" style="flex:1;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:4px;font-family:Arial,sans-serif;font-size:14px;outline:none" onchange="togglePayFields()"></select>
+                  <button type="button" onclick="addStaffRole()" class="btn-sm blue" title="Add new role">+ New</button>
+                </div>
               </div>
               <div class="sf"><label>Status</label>
                 <select id="sStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
@@ -1861,6 +1859,78 @@ window.searchRoutes = function(q) {
 };
 
 
+
+// ══ STAFF ROLES ══
+var defaultStaffRoles = [
+  {label:'Driver', pay:'per_trip'},
+  {label:'Sideman', pay:'per_trip'},
+  {label:'Helper', pay:'per_trip'},
+  {label:'Office Administrator', pay:'monthly'},
+  {label:'Manager', pay:'monthly'},
+  {label:'Dispatcher', pay:'monthly'},
+  {label:'Mechanic', pay:'monthly'},
+  {label:'Security', pay:'monthly'}
+];
+function getStaffRoles(){ return JSON.parse(localStorage.getItem('pi-trucking-staff-roles') || JSON.stringify(defaultStaffRoles)); }
+function saveStaffRoles(arr){ localStorage.setItem('pi-trucking-staff-roles', JSON.stringify(arr)); }
+
+function populateRoleSelect(selected) {
+  var sel = document.getElementById('sRole');
+  if (!sel) return;
+  var roles = getStaffRoles();
+  sel.innerHTML = roles.map(function(r) {
+    var val = typeof r === 'string' ? r : r.label;
+    return '<option value="' + val + '"' + (val === selected ? ' selected' : '') + '>' + val + '</option>';
+  }).join('');
+  // Auto-set pay type based on role default
+  sel.onchange = function() {
+    var roles2 = getStaffRoles();
+    var found = roles2.find(function(r){ return (typeof r==='string'?r:r.label) === sel.value; });
+    if (found && found.pay) {
+      var pt = document.getElementById('sPayType');
+      if (pt) { pt.value = found.pay; togglePayFields(); }
+    } else {
+      togglePayFields();
+    }
+  };
+}
+
+window.addStaffRole = function() {
+  piPrompt('New Role Title', 'e.g. Owner Operator, Accountant, Cleaner', function(name) {
+    var roles = getStaffRoles();
+    var exists = roles.find(function(r){ return (typeof r==='string'?r:r.label)===name; });
+    if (exists) { showToast('Role already exists', 'error'); return; }
+    // Ask pay type via second prompt — use a quick inline choice
+    var wrap = document.createElement('div');
+    wrap.className = 'pi-modal-wrap';
+    wrap.innerHTML = '<div class="pi-modal">' +
+      '<div class="pi-modal-title">Pay Type for "' + name + '"</div>' +
+      '<div class="pi-modal-msg">How is this role typically paid?</div>' +
+      '<div style="display:flex;gap:0.6rem;margin-top:0.4rem">' +
+        '<button class="btn-primary" style="flex:1" id="ptPerTrip">Per Trip</button>' +
+        '<button class="btn-outline" style="flex:1" id="ptMonthly">Monthly</button>' +
+      '</div></div>';
+    document.body.appendChild(wrap);
+    wrap.querySelector('#ptPerTrip').onclick = function() {
+      wrap.remove(); finalizeNewRole(name, 'per_trip');
+    };
+    wrap.querySelector('#ptMonthly').onclick = function() {
+      wrap.remove(); finalizeNewRole(name, 'monthly');
+    };
+  });
+};
+
+function finalizeNewRole(name, payType) {
+  var roles = getStaffRoles();
+  roles.push({label: name, pay: payType});
+  saveStaffRoles(roles);
+  populateRoleSelect(name);
+  // Set pay type automatically
+  var pt = document.getElementById('sPayType');
+  if (pt) { pt.value = payType; togglePayFields(); }
+  showToast('"' + name + '" role added ✓');
+}
+
 // ══ EXPENSE CATEGORIES ══
 var defaultExpCats = ['Fuel','Maintenance','Salary','Tax','Insurance','Tolls','Staff Meals','Equipment','Vehicle Purchase','Other'];
 function getExpCats(){ return JSON.parse(localStorage.getItem('pi-trucking-exp-cats') || JSON.stringify(defaultExpCats)); }
@@ -2028,8 +2098,8 @@ function openTripDrawer(id){
   document.getElementById('tripDrwTitle').textContent=trip?'Trip '+trip.ref:'Log New Trip';
   document.getElementById('tripDrwRef').textContent=trip?fmtDate(trip.trip_date):'';
   var truckOpts=allFleet.map(function(f){return '<option value="'+f.truck_id+'"'+(trip&&trip.truck_id===f.truck_id?' selected':'')+'>'+f.truck_id+' ('+f.plate+')</option>';}).join('');
-  var driverOpts='<option value="">— Select Driver —</option>'+allStaff.filter(function(s){return s.role==='Driver'&&s.status==='Active';}).map(function(s){return '<option value="'+s.name+'"'+(trip&&trip.driver_name===s.name?' selected':'')+'>'+s.name+'</option>';}).join('');
-  var sidemanOpts='<option value="">— None —</option>'+allStaff.filter(function(s){return (s.role==='Sideman'||s.role==='Driver')&&s.status==='Active';}).map(function(s){return '<option value="'+s.name+'"'+(trip&&trip.sideman_name===s.name?' selected':'')+'>'+s.name+'</option>';}).join('');
+  var driverOpts='<option value="">— Select Driver —</option>'+allStaff.filter(function(s){return s.pay_type==='per_trip'&&s.status==='Active';}).map(function(s){return '<option value="'+s.name+'"'+(trip&&trip.driver_name===s.name?' selected':'')+'>'+s.name+' ('+s.role+')</option>';}).join('');
+  var sidemanOpts='<option value="">— None —</option>'+allStaff.filter(function(s){return s.pay_type==='per_trip'&&s.status==='Active';}).map(function(s){return '<option value="'+s.name+'"'+(trip&&trip.sideman_name===s.name?' selected':'')+'>'+s.name+' ('+s.role+')</option>';}).join('');
   var statusOpts=['Scheduled','In Progress','Completed','Cancelled'].map(function(s){return '<option value="'+s+'"'+(trip&&trip.status===s?' selected':s==='Scheduled'&&!trip?' selected':'')+'>'+s+'</option>';}).join('');
   document.getElementById('tripDrwBody').innerHTML=
     '<div class="drw-section"><div class="drw-sec-title">Trip Details</div>'+
@@ -2265,7 +2335,7 @@ function openStaffDrawer(id){
   document.getElementById('staffDrwTitle').textContent=staff?'Edit Staff':'Add Staff';
   document.getElementById('staffId').value=staff?staff.id:'';
   document.getElementById('sName').value=staff?staff.name||'':'';
-  document.getElementById('sRole').value=staff?staff.role||'Driver':'Driver';
+  populateRoleSelect(staff?staff.role||'Driver':'Driver');
   document.getElementById('sStatus').value=staff?staff.status||'Active':'Active';
   document.getElementById('sPhone').value=staff?staff.phone||'':'';
   document.getElementById('sEmail').value=staff?staff.email||'':'';
