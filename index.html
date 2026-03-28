@@ -2142,10 +2142,12 @@ function renderTrips(){
     allTrips.forEach(function(t){ if(t.trip_date) months[t.trip_date.substring(0,7)] = true; });
     var sortedMonths = Object.keys(months).sort().reverse();
     var currentMonthVal = monthSel.value;
+    var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     monthSel.innerHTML = '<option value="">All Months</option>' + sortedMonths.map(function(ym) {
-      var d = new Date(ym + '-01');
-      var mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return '<option value="' + ym + '"' + (ym===currentMonthVal?' selected':'') + '>' + mn[d.getMonth()] + ' ' + d.getFullYear() + '</option>';
+      var parts = ym.split('-');
+      var yr = parts[0];
+      var mo = parseInt(parts[1]) - 1; // 0-indexed
+      return '<option value="' + ym + '"' + (ym===currentMonthVal?' selected':'') + '>' + MN[mo] + ' ' + yr + '</option>';
     }).join('');
   }
 
