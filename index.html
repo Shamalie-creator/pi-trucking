@@ -365,7 +365,7 @@
           </div>
           <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
             <input type="text" class="search-input" id="tripSearch" placeholder="🔍 Search destination, driver, ref..." style="width:200px" />
-            <select id="tripMonthFilter" class="search-input" style="width:140px" onchange="tripMonthFilter=this.value;renderTrips()">
+            <select id="tripMonthFilter" class="search-input" style="width:140px" onchange="tripMonthVal=this.value;renderTrips()">
               <option value="">All Months</option>
             </select>
             <select id="tripTruckFilter" class="search-input" style="width:120px" onchange="tripTruckFilterVal=this.value;renderTrips()">
@@ -2113,7 +2113,7 @@ function refreshData(){
 }
 
 // ══ TRIPS ══
-var tripFilter='all',tripSearch='',tripMonthFilter='',tripTruckFilterVal='',tripSort='date_desc',currentTrip=null;
+var tripFilter='all',tripSearch='',tripMonthVal='',tripTruckFilterVal='',tripSort='date_desc',currentTrip=null;
 var revPeriod='all';
 
 function loadTrips(){
@@ -2141,19 +2141,19 @@ function renderTrips(){
     var months = {};
     allTrips.forEach(function(t){ if(t.trip_date) months[t.trip_date.substring(0,7)] = true; });
     var sortedMonths = Object.keys(months).sort().reverse();
-    var currentMonthVal = monthSel.value;
+    var currentMonthVal = tripMonthVal;
     var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     monthSel.innerHTML = '<option value="">All Months</option>' + sortedMonths.map(function(ym) {
       var parts = ym.split('-');
       var yr = parts[0];
       var mo = parseInt(parts[1]) - 1; // 0-indexed
-      return '<option value="' + ym + '"' + (ym===currentMonthVal?' selected':'') + '>' + MN[mo] + ' ' + yr + '</option>';
+      return '<option value="' + ym + '"' + (ym===tripMonthVal?' selected':'') + '>' + MN[mo] + ' ' + yr + '</option>';
     }).join('');
   }
 
   var filtered = allTrips.filter(function(t) {
     if (tripFilter !== 'all' && t.status !== tripFilter) return false;
-    if (tripMonthFilter && !(t.trip_date||'').startsWith(tripMonthFilter)) return false;
+    if (tripMonthVal && !(t.trip_date||'').startsWith(tripMonthVal)) return false;
     if (tripTruckFilterVal && t.truck_id !== tripTruckFilterVal) return false;
     var q = tripSearch.toLowerCase();
     if (q) {
