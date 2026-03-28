@@ -137,7 +137,7 @@
     /* DRAWER */
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s}
     .overlay.open{opacity:1;pointer-events:all}
-    .drawer{position:fixed;top:0;right:-480px;width:460px;height:100vh;background:#fff;z-index:201;box-shadow:-4px 0 30px rgba(0,0,0,0.15);transition:right 0.25s ease;display:flex;flex-direction:column}
+    .drawer{position:fixed;top:0;right:-520px;width:460px;height:100vh;background:#fff;z-index:201;box-shadow:-4px 0 30px rgba(0,0,0,0.15);transition:right 0.25s ease;display:flex;flex-direction:column}
     .drawer.open{right:0}
     .drw-head{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--navy)}
     .drw-title{font-size:15px;font-weight:700;color:#fff}
@@ -198,6 +198,16 @@
     .workers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
     .worker-card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:1.2rem}
     .worker-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+
+
+    /* Custom confirm/prompt modals */
+    .pi-modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:flex;align-items:center;justify-content:center}
+    .pi-modal{background:#fff;border-radius:8px;padding:1.6rem;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+    .pi-modal-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:0.8rem}
+    .pi-modal-msg{font-size:13px;color:var(--text);margin-bottom:1.2rem;line-height:1.5}
+    .pi-modal-input{width:100%;padding:0.65rem 0.9rem;border:1.5px solid var(--border);border-radius:4px;font-family:Arial,sans-serif;font-size:14px;outline:none;margin-bottom:1rem}
+    .pi-modal-input:focus{border-color:var(--navy)}
+    .pi-modal-btns{display:flex;gap:0.6rem;justify-content:flex-end}
 
     /* TOAST */
     .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:#fff;padding:0.8rem 1.4rem;border-radius:6px;font-size:13px;font-weight:500;z-index:999;transform:translateY(100px);opacity:0;transition:all 0.3s;max-width:320px}
@@ -278,7 +288,8 @@
       <div class="nav-item" data-panel="staff"><span class="nav-icon">👷</span>Staff</div>
       <div class="nav-item" data-panel="salary"><span class="nav-icon">💰</span>Salary</div>
       <div class="nav-item" data-panel="financials"><span class="nav-icon">📈</span>Financials</div>
-      <div class="nav-item" data-panel="payslips"><span class="nav-icon">📄</span>Payslips</div>
+
+      <div class="nav-item" data-panel="clients"><span class="nav-icon">🏢</span>Clients</div>
       <div class="nav-item" data-panel="settings"><span class="nav-icon">⚙️</span>Settings</div>
     </nav>
     <button class="logout-btn" id="logoutBtn">Sign Out</button>
@@ -592,17 +603,10 @@
               <input type="hidden" id="expId" />
               <div class="sf"><label>Date</label><input id="expDate" type="date" /></div>
               <div class="sf"><label>Category</label>
-                <select id="expCat">
-                  <option value="Fuel">Fuel</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="Salary">Salary</option>
-                  <option value="Tax">Tax</option>
-                  <option value="Insurance">Insurance</option>
-                  <option value="Tolls">Tolls</option>
-                  <option value="Food">Staff Meals</option>
-                  <option value="Equipment">Equipment</option>
-                  <option value="Other">Other</option>
-                </select>
+                <div style="display:flex;gap:0.4rem;align-items:center">
+                  <select id="expCat" style="flex:1;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:4px;font-family:Arial,sans-serif;font-size:14px;outline:none"></select>
+                  <button type="button" onclick="addExpenseCategory()" class="btn-sm blue" title="Add new category">+ New</button>
+                </div>
               </div>
               <div class="sf"><label>Description</label><input id="expDesc" placeholder="e.g. Fuel for Truck 1" /></div>
               <div class="sf"><label>Truck (optional)</label>
@@ -679,45 +683,36 @@
         </div>
       </div>
 
-      <!-- ══ PAYSLIPS ══ -->
-      <div class="panel" id="panel-payslips">
-        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:0.3rem">Payslip Reader</div>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:1.4rem">Upload a photo of a payslip and AI will extract the trip data and revenue automatically.</p>
-        <div class="two-col">
+      <!-- ══ CLIENTS ══ -->
+      <!-- ══ CLIENTS ══ -->
+      <div class="panel" id="panel-clients">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;flex-wrap:wrap;gap:0.6rem">
           <div>
-            <div class="card">
-              <div class="card-header"><div class="card-title">Upload Payslip</div></div>
-              <div class="card-body">
-                <div class="upload-area" id="uploadArea" onclick="document.getElementById('payslipFile').click()">
-                  <div class="upload-icon">📄</div>
-                  <div class="upload-title">Click to upload payslip photo</div>
-                  <div class="upload-sub">JPG, PNG or PDF — photo of payslip from client</div>
-                  <input type="file" id="payslipFile" accept="image/*,.pdf" style="display:none" onchange="handlePayslipUpload(this)" />
-                </div>
-                <div id="uploadPreview" style="display:none;margin-top:1rem">
-                  <img id="uploadedImg" style="max-width:100%;border-radius:4px;border:1px solid var(--border)" />
-                </div>
-                <div id="uploadStatus" style="margin-top:1rem;display:none">
-                  <div class="progress-bar"><div class="progress-fill" id="uploadProgress" style="width:0%;background:var(--navy)"></div></div>
-                  <div style="font-size:12px;color:var(--muted);margin-top:0.4rem" id="uploadStatusText">Processing...</div>
-                </div>
-              </div>
-            </div>
+            <div style="font-size:15px;font-weight:700;color:var(--text)">Client Profiles</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Manage clients and their rate sheets per truck type.</div>
           </div>
-          <div>
-            <div class="card" id="payslipResultCard" style="display:none">
-              <div class="card-header"><div class="card-title">Extracted Data</div></div>
-              <div class="card-body" id="payslipResult"></div>
-              <div style="padding:0 1.2rem 1.2rem;display:flex;gap:0.6rem">
-                <button class="drw-btn dark" onclick="savePayslipData()">💾 Save to Revenue</button>
-                <button class="drw-btn outline" onclick="resetPayslip()">Clear</button>
-              </div>
+          <button class="btn-primary" onclick="openClientDrawer(null)">+ Add Client</button>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;margin-bottom:1rem">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:0.6rem">🔍 Search Routes Across All Clients</div>
+          <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">
+            <input class="field-input" id="routeSearchInput" placeholder="e.g. Montego Bay, Ocho Rios..." style="flex:1;min-width:200px" oninput="searchRoutes(this.value)" />
+            <button class="btn-outline" onclick="searchRoutes(document.getElementById('routeSearchInput').value)">Search</button>
+            <button class="btn-outline" onclick="document.getElementById('routeSearchInput').value='';searchRoutes('')">Clear</button>
+          </div>
+          <div id="routeSearchResults" style="margin-top:0.8rem;display:none"></div>
+        </div>
+        <div id="clientsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem">
+          <div class="loading"><span class="spinner"></span>Loading...</div>
+        </div>
+        <!-- Client Modal -->
+        <div id="clientModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;overflow-y:auto;padding:2rem 1rem">
+          <div style="background:#fff;border-radius:8px;max-width:600px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+            <div style="background:var(--navy);padding:1.2rem 1.4rem;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between">
+              <div class="drw-title" id="clientDrwTitle" style="color:#fff">Client Profile</div>
+              <button onclick="closeClientDrawer()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.3rem;cursor:pointer;line-height:1">✕</button>
             </div>
-            <div class="card">
-              <div class="card-header"><div class="card-title">Recent Payslips</div></div>
-              <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Client</th><th>Trips</th><th>Amount</th></tr></thead>
-              <tbody id="payslipHistoryBody"><tr><td colspan="4" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
-            </div>
+            <div id="clientDrwBody" style="padding:1.4rem"></div>
           </div>
         </div>
       </div>
@@ -799,6 +794,107 @@ function sbDelete(table, id) {
   return fetch(SUPABASE_URL+'/rest/v1/'+table+'?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
 }
 
+
+
+// ══ CLIENTS PANEL ══
+window.removeClient = function(name) {
+  piConfirm('Remove "' + name + '" from clients?', function() {
+    var clients = getClients().filter(function(c) { return c !== name; });
+    saveClients(clients);
+    delete clientProfiles[name];
+    saveClientProfiles();
+    renderClientsGrid();
+    showToast(name + ' removed');
+  });
+};
+
+window.createNewClient = function() {
+  var name = document.getElementById('newClientName') ? document.getElementById('newClientName').value.trim() : '';
+  var lap  = parseFloat(document.getElementById('newClientLAP') ? document.getElementById('newClientLAP').value : 0) || 0;
+  if (!name) { showToast('Please enter a client name', 'error'); return; }
+  var clients = getClients();
+  if (clients.includes(name)) { showToast('Client already exists', 'error'); return; }
+  clients.push(name);
+  saveClients(clients);
+  clientProfiles[name] = { load_and_park: lap, effective_date: '', truck_types: {} };
+  saveClientProfiles();
+  document.getElementById('addClientModal').remove();
+  renderClientsGrid();
+  showToast(name + ' added ✓');
+  // Open profile straight away
+  openClientProfileFull(name);
+};
+
+window.closeClientProfileFull = function() {
+  var m = document.getElementById('clientProfileFullModal');
+  if (m) m.remove();
+};
+
+window.addTruckTypeBlock = function() {
+  var list = document.getElementById('ttBlockList');
+  var idx = list.children.length;
+  var div = document.createElement('div');
+  div.className = 'card';
+  div.id = 'tt-block-' + idx;
+  div.style.marginBottom = '0.8rem';
+  div.innerHTML =
+    '<div class="card-header" style="background:var(--bg)">' +
+      '<div style="display:flex;align-items:center;gap:0.8rem;flex:1">' +
+        '<input class="field-input" style="font-size:13px;font-weight:600;max-width:160px" placeholder="e.g. 3 Ton" id="tt-name-' + idx + '" />' +
+      '</div>' +
+      '<button onclick="removeCPRow(this.parentElement)" class="btn-sm red">Remove Type</button>' +
+    '</div>' +
+    '<div class="card-body" id="tt-routes-' + idx + '" style="padding:0.8rem"></div>' +
+    '<div style="padding:0 0.8rem 0.8rem">' +
+      '<button onclick="addRouteToBlock(' + idx + ')" class="btn-outline" style="font-size:12px;width:100%">+ Add Route</button>' +
+    '</div>';
+  list.appendChild(div);
+};
+
+window.addRouteToBlock = function(idx) {
+  var routesEl = document.getElementById('tt-routes-' + idx);
+  if (!routesEl) return;
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:0.4rem;margin-bottom:0.3rem';
+  div.className = 'route-row';
+  div.innerHTML =
+    '<input class="field-input" style="flex:2;font-size:12px" placeholder="Route name" />' +
+    '<input class="field-input" style="flex:1;font-size:12px" type="number" placeholder="Price" />' +
+    '<button onclick="removeCPRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0 0.4rem;font-size:1rem">✕</button>';
+  routesEl.appendChild(div);
+};
+
+window.saveClientProfileFull = function(clientName) {
+  var lap  = parseFloat(document.getElementById('cpf-lap') ? document.getElementById('cpf-lap').value : 0) || 0;
+  var date = document.getElementById('cpf-date') ? document.getElementById('cpf-date').value : '';
+  var truckTypes = {};
+
+  document.querySelectorAll('[id^="tt-block-"]').forEach(function(block) {
+    var idx = block.id.replace('tt-block-', '');
+    var nameEl = document.getElementById('tt-name-' + idx);
+    if (!nameEl || !nameEl.value.trim()) return;
+    var ttName = nameEl.value.trim();
+    var routes = {};
+    var routesEl = document.getElementById('tt-routes-' + idx);
+    if (routesEl) {
+      routesEl.querySelectorAll('.route-row').forEach(function(row) {
+        var inputs = row.querySelectorAll('input');
+        if (inputs[0] && inputs[1] && inputs[0].value.trim()) {
+          routes[inputs[0].value.trim()] = parseFloat(inputs[1].value) || 0;
+        }
+      });
+    }
+    truckTypes[ttName] = routes;
+  });
+
+  clientProfiles[clientName] = { load_and_park: lap, effective_date: date, truck_types: truckTypes };
+  saveClientProfiles();
+  closeClientProfileFull();
+  renderClientsGrid();
+  var ttCount = Object.keys(truckTypes).length;
+  var routeCount = Object.values(truckTypes).reduce(function(s,r){return s+Object.keys(r).length;},0);
+  showToast(clientName + ' saved — ' + ttCount + ' truck type(s), ' + routeCount + ' routes ✓');
+};
 
 // ══ CLIENTS & SERVICES MANAGEMENT ══
 var defaultServices = ['General Haulage','Furniture Moving','Construction Materials','Truck Advertisement','Container Haulage','Garbage Removal','Equipment Transport','Other'];
@@ -903,8 +999,895 @@ window.previewStaffId = function(input) {
   reader.readAsDataURL(file);
 };
 
+
+// ══ CLIENT PROFILES (rates per route) ══
+var clientProfiles = JSON.parse(localStorage.getItem('pi-trucking-client-profiles') || '{}');
+
+// Seed CariMed default if not already set
+if (!clientProfiles['Cari-Med Group Ltd']) {
+  clientProfiles['Cari-Med Group Ltd'] = {
+    load_and_park: 2500,
+    effective_date: 'January 5, 2026',
+    truck_types: {
+      '5 Ton': {
+      "DC Comissary": 8120,
+      "Spanish Town/Portmore": 16240,
+      "Corp(Red Hills Rd/Molynes Rd/3 Mile)": 17920,
+      "Old Harbour": 18816,
+      "Barbican/New Kgn/HWT": 18816,
+      "Downtown": 19040,
+      "Liguanea/Cross Roads/Manor Park": 19264,
+      "Linstead": 19488,
+      "Papine": 19488,
+      "Stony Hill": 20720,
+      "Harbour View/Airport": 21504,
+      "Ewarton": 22400,
+      "May Pen": 22400,
+      "Guys Hill": 22624,
+      "Chapelton": 26880,
+      "Lawrence Tavern": 27216,
+      "Lionel Town": 27216,
+      "Kellits": 28560,
+      "Claremont": 28896,
+      "St. Ann's Bay": 28896,
+      "Mandeville": 29680,
+      "Highgate": 29904,
+      "Morant Bay": 29904,
+      "Ocho Rios": 29904,
+      "Port Maria": 29904,
+      "Annotto Bay": 29904,
+      "Buff Bay": 29904,
+      "Frankfield": 29904,
+      "Christiana/Spaulding": 31696,
+      "Stewart Town (St. Mary)": 31808,
+      "Oracabessa": 31808,
+      "Runaway Bay": 32256,
+      "Discovery Bay": 33824,
+      "Browns Town": 33824,
+      "Port Antonio": 35280,
+      "Albert Town": 35840,
+      "Santa Cruz": 35840,
+      "Southfield/Junction": 37184,
+      "Watchwell": 37184,
+      "Alexandria (w/ Brns Twn)": 37408,
+      "Falmouth": 40320,
+      "Black River": 41440,
+      "Wakefield": 42560,
+      "Whitehouse": 44240,
+      "Darliston": 44800,
+      "Montego Bay": 46480,
+      "Anchovy": 48384,
+      "Hopewell": 50400,
+      "Sandy Bay": 50400,
+      "Savanna La Mar/Petersfield": 51520,
+      "Cambridge": 51520,
+      "Lucea": 54880,
+      "Negril": 56000,
+      "Orange Bay": 57120,
+      "Bethel Town (w/ Sav)": 57680,
+      "Green Island": 58240
+      },
+      "2 Ton Van": {
+        "DC Comissary": 4704,
+        "Spanish Town/Portmore": 9408,
+        "Corp(Red Hills Rd/Molynes Rd/3 Mile)": 10864,
+        "Old Harbour": 11424,
+        "Barbican/New Kgn/HWT": 11424,
+        "Downtown": 11648,
+        "Liguanea/Cross Roads/Manor Park": 11760,
+        "Linstead": 11872,
+        "Papine": 11872,
+        "Stony Hill": 12656,
+        "Harbour View/Airport": 13216,
+        "Ewarton": 13664,
+        "May Pen": 13664,
+        "Guys Hill": 13888,
+        "Chapelton": 16464,
+        "Lawrence Tavern": 16688,
+        "Lionel Town": 16688,
+        "Kellits": 17584,
+        "Claremont": 17808,
+        "St. Ann's Bay": 17808,
+        "Mandeville": 18256,
+        "Highgate": 18368,
+        "Morant Bay": 18368,
+        "Ocho Rios": 18368,
+        "Port Maria": 18368,
+        "Annotto Bay": 18368,
+        "Buff Bay": 18368,
+        "Frankfield": 18368,
+        "Christiana/Spaulding": 19488,
+        "Stewart Town (St. Mary)": 19600,
+        "Oracabessa": 19600,
+        "Runaway Bay": 19936,
+        "Discovery Bay": 20832,
+        "Browns Town": 20832,
+        "Port Antonio": 21728,
+        "Albert Town": 22176,
+        "Santa Cruz": 22176,
+        "Southfield/Junction": 22960,
+        "Watchwell": 22960,
+        "Alexandria (w/ Brns Twn)": 23072,
+        "Falmouth": 24752,
+        "Black River": 25648,
+        "Wakefield": 26320,
+        "Whitehouse": 27328,
+        "Darliston": 27776,
+        "Montego Bay": 28784,
+        "Anchovy": 30016,
+        "Hopewell": 31248,
+        "Sandy Bay": 31248,
+        "Savanna La Mar/Petersfield": 31920,
+        "Cambridge": 31920,
+        "Lucea": 34048,
+        "Negril": 34720,
+        "Orange Bay": 35392,
+        "Bethel Town (w/ Sav)": 35840,
+        "Green Island": 36176
+      }
+    }
+  };
+  localStorage.setItem('pi-trucking-client-profiles', JSON.stringify(clientProfiles));
+}
+
+function saveClientProfiles() {
+  localStorage.setItem('pi-trucking-client-profiles', JSON.stringify(clientProfiles));
+}
+
+// When client changes in trip form — load routes dropdown
+window.onTripClientChange = function() {
+  var client = document.getElementById('td-client') ? document.getElementById('td-client').value : '';
+  var routeSel = document.getElementById('td-route');
+  var revInput = document.getElementById('td-revenue');
+  if (!routeSel) return;
+
+  var profile = clientProfiles[client];
+  if (profile && profile.routes && Object.keys(profile.routes).length > 0) {
+    var wrap = document.getElementById('td-route-wrap');
+    if (wrap) wrap.style.display = 'block';
+    routeSel.style.display = 'block';
+    routeSel.innerHTML = '<option value="">— Select Route —</option>' +
+      Object.keys(profile.routes).map(function(r) {
+        return '<option value="' + r + '" data-price="' + profile.routes[r] + '">' + r + ' — JMD ' + Number(profile.routes[r]).toLocaleString() + '</option>';
+      }).join('');
+    routeSel.onchange = function() {
+      var sel = routeSel.options[routeSel.selectedIndex];
+      var price = sel ? parseFloat(sel.dataset.price) || 0 : 0;
+      if (revInput && price > 0) {
+        revInput.value = price;
+        // Update destination field too
+        var destEl = document.getElementById('td-to');
+        if (destEl && sel.value) destEl.value = sel.value;
+      }
+    };
+  } else {
+    var wrap2 = document.getElementById('td-route-wrap');
+    if (wrap2) wrap2.style.display = 'none';
+    routeSel.style.display = 'none';
+    routeSel.innerHTML = '';
+  }
+};
+
+// ══ QUICK PAY DRAWER ══
+var quickPayTripId = null;
+
+
+window.onTruckTypeChange = function() {
+  var client = document.getElementById('td-client') ? document.getElementById('td-client').value : '';
+  var ttSel  = document.getElementById('td-trucktype');
+  var tt     = ttSel ? ttSel.value : '';
+  var routeSel = document.getElementById('td-route');
+  var revInput = document.getElementById('td-revenue');
+  var profile  = clientProfiles[client];
+  var routes   = profile && profile.truck_types && profile.truck_types[tt] ? profile.truck_types[tt] : {};
+
+  var wrap = document.getElementById('td-route-wrap');
+  if (Object.keys(routes).length > 0) {
+    if (wrap) wrap.style.display = 'block';
+    if (routeSel) {
+      routeSel.innerHTML = '<option value="">— Select Route —</option>' +
+        Object.keys(routes).map(function(r) {
+          return '<option value="' + r + '" data-price="' + routes[r] + '">' + r + ' — JMD ' + Number(routes[r]).toLocaleString() + '</option>';
+        }).join('');
+      routeSel.onchange = function() {
+        var sel = routeSel.options[routeSel.selectedIndex];
+        var price = sel ? parseFloat(sel.dataset.price) || 0 : 0;
+        if (revInput && price > 0) revInput.value = price;
+        var destEl = document.getElementById('td-to');
+        if (destEl && sel && sel.value) destEl.value = sel.value;
+      };
+    }
+  } else {
+    if (wrap) wrap.style.display = 'none';
+  }
+};
+window.openQuickPayDrawer = function(tripId) {
+  var trip = allTrips.find(function(t) { return t.id === tripId; });
+  if (!trip) return;
+  quickPayTripId = tripId;
+
+  // Create a simple modal
+  var existing = document.getElementById('quickPayModal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'quickPayModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:8px;padding:1.8rem;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.3)">' +
+    '<div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:0.3rem">💰 Record Payment</div>' +
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:1.2rem">Trip: <strong>' + trip.ref + '</strong> · ' + (trip.client||'') + (trip.destination?' · '+trip.destination:'') + '</div>' +
+    '<div style="background:var(--bg);border-radius:4px;padding:0.8rem;margin-bottom:1rem;font-size:13px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:0.3rem"><span style="color:var(--muted)">Trip Revenue</span><strong>JMD ' + Number(trip.revenue||0).toLocaleString() + '</strong></div>' +
+      '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Already Paid</span><strong style="color:var(--green)">JMD ' + Number(trip.amount_paid||0).toLocaleString() + '</strong></div>' +
+    '</div>' +
+    '<div class="sf"><label class="field-label">Amount Received (JMD)</label><input class="field-input" id="qp-amount" type="number" value="' + Math.max(0,(trip.revenue||0)-(trip.amount_paid||0)) + '" /></div>' +
+    '<div class="sf"><label class="field-label">Payment Method</label>' +
+      '<select class="field-input" id="qp-method">' +
+        '<option value="Cash">Cash</option>' +
+        '<option value="Bank Transfer">Bank Transfer</option>' +
+        '<option value="Cheque">Cheque</option>' +
+      '</select>' +
+    '</div>' +
+    '<div class="sf"><label class="field-label">Notes (optional)</label><input class="field-input" id="qp-notes" placeholder="e.g. Receipt #123" /></div>' +
+    '<div style="display:flex;gap:0.6rem;margin-top:1rem">' +
+      '<button class="btn-primary" style="flex:1" onclick="saveQuickPay()">💰 Confirm Payment</button>' +
+      '<button class="btn-outline" onclick="closeQuickPay()">Cancel</button>' +
+    '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+};
+
+window.addNewRateSheetBtn = function(){ var el=document.getElementById('cd-name'); addNewRateSheet(el?el.value:''); };
+window.saveRateSheetBtn = function(btn){ saveRateSheet(decodeURIComponent(btn.dataset.cn), decodeURIComponent(btn.dataset.sn)); };
+window.deleteRateSheetBtn = function(btn){ deleteRateSheet(decodeURIComponent(btn.dataset.cn), decodeURIComponent(btn.dataset.sn)); };
+window.editRateSheetBtn = function(btn){ editRateSheet(decodeURIComponent(btn.dataset.cn), decodeURIComponent(btn.dataset.sn)); };
+window.removeCPRow = function(btn){ var row=btn.parentElement; if(row)row.remove(); };
+window.closeClientModal = function(){ var m=document.getElementById("addClientModal"); if(m)m.remove(); };
+window.closeQuickPay = function(){ var m=document.getElementById("quickPayModal"); if(m)m.remove(); };
+window.closeClientProfile = function(){ var m=document.getElementById("clientProfileModal"); if(m)m.remove(); };
+window.saveQuickPay = function() {
+  var trip = allTrips.find(function(t) { return t.id === quickPayTripId; });
+  if (!trip) return;
+  var amt    = parseFloat(document.getElementById('qp-amount').value) || 0;
+  var method = document.getElementById('qp-method').value;
+  var notes  = document.getElementById('qp-notes').value.trim();
+  var newPaid = (parseFloat(trip.amount_paid) || 0) + amt;
+  var newStatus = newPaid >= (trip.revenue || 0) ? 'Completed' : trip.status;
+
+  sbUpdate('tr_trips', quickPayTripId, {
+    amount_paid: newPaid,
+    payment_method: method,
+    notes: (trip.notes ? trip.notes + ' | ' : '') + 'Paid JMD ' + amt.toLocaleString() + ' via ' + method + (notes ? ' (' + notes + ')' : ''),
+    status: newStatus
+  }).then(function() {
+    trip.amount_paid = newPaid;
+    trip.payment_method = method;
+    trip.status = newStatus;
+    renderTrips();
+    updateTripCounts();
+    document.getElementById('quickPayModal').remove();
+    showToast('Payment of JMD ' + amt.toLocaleString() + ' recorded ✓');
+  }).catch(function() { showToast('Failed to record payment', 'error'); });
+};
+
+// ══ CLIENT PROFILE MANAGER ══
+window.openClientProfile = function(clientName) {
+  var profile = clientProfiles[clientName] || { routes: {} };
+  var existing = document.getElementById('clientProfileModal');
+  if (existing) existing.remove();
+
+  var routeRows = Object.entries(profile.routes || {}).map(function(entry, i) {
+    return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem" id="cpr-'+i+'">' +
+      '<input class="field-input" style="flex:2;font-size:12px" value="' + entry[0] + '" placeholder="Route name" id="cpr-name-'+i+'" />' +
+      '<input class="field-input" style="flex:1;font-size:12px" type="number" value="' + entry[1] + '" placeholder="Price" id="cpr-price-'+i+'" />' +
+      '<button onclick="removeCPRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem">✕</button>' +
+    '</div>';
+  }).join('');
+
+  var modal = document.createElement('div');
+  modal.id = 'clientProfileModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:2rem 0';
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:8px;padding:1.8rem;width:560px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.3);margin:auto">' +
+    '<div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:0.2rem">📋 Client Profile: ' + clientName + '</div>' +
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:1.2rem">Set route prices for this client. These auto-fill when logging trips.</div>' +
+    '<div class="sf-row">' +
+      '<div class="sf"><label class="field-label">Load & Park Fee (JMD)</label><input class="field-input" id="cp-lap" type="number" value="' + (profile.load_and_park||0) + '" /></div>' +
+      '<div class="sf"><label class="field-label">Effective Date</label><input class="field-input" id="cp-date" value="' + (profile.effective_date||'') + '" placeholder="e.g. Jan 5, 2026" /></div>' +
+    '</div>' +
+    '<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);margin-bottom:0.6rem;margin-top:0.4rem">Routes & Prices</div>' +
+    '<div id="cpRouteList" style="max-height:350px;overflow-y:auto;margin-bottom:0.6rem">' + routeRows + '</div>' +
+    '<button onclick="addCPRoute()" class="btn-outline" style="width:100%;margin-bottom:1rem;font-size:12px">+ Add Route</button>' +
+    '<div style="display:flex;gap:0.6rem">' +
+      '<button class="btn-primary" style="flex:1" onclick="saveClientProfile(this.dataset.cn)" data-cn="'+clientName+'">💾 Save Profile</button>' +
+      '<button class="btn-outline" onclick="closeClientProfile()">Cancel</button>' +
+    '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+};
+
+window.addCPRoute = function() {
+  var list = document.getElementById('cpRouteList');
+  var i = list.children.length;
+  var div = document.createElement('div');
+  div.id = 'cpr-' + i;
+  div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem';
+  div.innerHTML =
+    '<input class="field-input" style="flex:2;font-size:12px" placeholder="Route name" id="cpr-name-' + i + '" />' +
+    '<input class="field-input" style="flex:1;font-size:12px" type="number" placeholder="Price" id="cpr-price-' + i + '" />' +
+    '<button onclick="removeCPRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem">✕</button>';
+  list.appendChild(div);
+};
+
+window.saveClientProfile = function(clientName) {
+  var routes = {};
+  document.querySelectorAll('#cpRouteList > div').forEach(function(row) {
+    var nameEl  = row.querySelector('[id^="cpr-name-"]');
+    var priceEl = row.querySelector('[id^="cpr-price-"]');
+    if (nameEl && priceEl && nameEl.value.trim()) {
+      routes[nameEl.value.trim()] = parseFloat(priceEl.value) || 0;
+    }
+  });
+  clientProfiles[clientName] = {
+    load_and_park: parseFloat(document.getElementById('cp-lap').value) || 0,
+    effective_date: document.getElementById('cp-date').value,
+    routes: routes
+  };
+  saveClientProfiles();
+  document.getElementById('clientProfileModal').remove();
+  showToast('Profile for ' + clientName + ' saved ✓');
+};
+
+
+// ══ CLIENTS TAB ══
+var TWO_TON_RATES = {
+  "DC Comissary": 4704,
+  "Spanish Town/Portmore": 9408,
+  "Corp(Red Hills Rd/Molynes Rd/3 Mile)": 10864,
+  "Old Harbour": 11424,
+  "Barbican/New Kgn/HWT": 11424,
+  "Downtown": 11648,
+  "Liguanea/Cross Roads/Manor Park": 11760,
+  "Linstead": 11872,
+  "Papine": 11872,
+  "Stony Hill": 12656,
+  "Harbour View/Airport": 13216,
+  "Ewarton": 13664,
+  "May Pen": 13664,
+  "Guys Hill": 13888,
+  "Chapelton": 16464,
+  "Lawrence Tavern": 16688,
+  "Lionel Town": 16688,
+  "Kellits": 17584,
+  "Claremont": 17808,
+  "St. Ann's Bay": 17808,
+  "Mandeville": 18256,
+  "Highgate": 18368,
+  "Morant Bay": 18368,
+  "Ocho Rios": 18368,
+  "Port Maria": 18368,
+  "Annotto Bay": 18368,
+  "Buff Bay": 18368,
+  "Frankfield": 18368,
+  "Christiana/Spaulding": 19488,
+  "Stewart Town (St. Mary)": 19600,
+  "Oracabessa": 19600,
+  "Runaway Bay": 19936,
+  "Discovery Bay": 20832,
+  "Browns Town": 20832,
+  "Port Antonio": 21728,
+  "Albert Town": 22176,
+  "Santa Cruz": 22176,
+  "Southfield/Junction": 22960,
+  "Watchwell": 22960,
+  "Alexandria (w/ Brns Twn)": 23072,
+  "Falmouth": 24752,
+  "Black River": 25648,
+  "Wakefield": 26320,
+  "Whitehouse": 27328,
+  "Darliston": 27776,
+  "Montego Bay": 28784,
+  "Anchovy": 30016,
+  "Hopewell": 31248,
+  "Sandy Bay": 31248,
+  "Savanna La Mar/Petersfield": 31920,
+  "Cambridge": 31920,
+  "Lucea": 34048,
+  "Negril": 34720,
+  "Orange Bay": 35392,
+  "Bethel Town (w/ Sav)": 35840,
+  "Green Island": 36176
+};
+
+var FIVE_TON_RATES = {
+  "DC Comissary": 8120,
+  "Spanish Town/Portmore": 16240,
+  "Corp(Red Hills Rd/Molynes Rd/3 Mile)": 17920,
+  "Old Harbour": 18816,
+  "Barbican/New Kgn/HWT": 18816,
+  "Downtown": 19040,
+  "Liguanea/Cross Roads/Manor Park": 19264,
+  "Linstead": 19488,
+  "Papine": 19488,
+  "Stony Hill": 20720,
+  "Harbour View/Airport": 21504,
+  "Ewarton": 22400,
+  "May Pen": 22400,
+  "Guys Hill": 22624,
+  "Chapelton": 26880,
+  "Lawrence Tavern": 27216,
+  "Lionel Town": 27216,
+  "Kellits": 28560,
+  "Claremont": 28896,
+  "St. Ann's Bay": 28896,
+  "Mandeville": 29680,
+  "Highgate": 29904,
+  "Morant Bay": 29904,
+  "Ocho Rios": 29904,
+  "Port Maria": 29904,
+  "Annotto Bay": 29904,
+  "Buff Bay": 29904,
+  "Frankfield": 29904,
+  "Christiana/Spaulding": 31696,
+  "Stewart Town (St. Mary)": 31808,
+  "Oracabessa": 31808,
+  "Runaway Bay": 32256,
+  "Discovery Bay": 33824,
+  "Browns Town": 33824,
+  "Port Antonio": 35280,
+  "Albert Town": 35840,
+  "Santa Cruz": 35840,
+  "Southfield/Junction": 37184,
+  "Watchwell": 37184,
+  "Alexandria (w/ Brns Twn)": 37408,
+  "Falmouth": 40320,
+  "Black River": 41440,
+  "Wakefield": 42560,
+  "Whitehouse": 44240,
+  "Darliston": 44800,
+  "Montego Bay": 46480,
+  "Anchovy": 48384,
+  "Hopewell": 50400,
+  "Sandy Bay": 50400,
+  "Savanna La Mar/Petersfield": 51520,
+  "Cambridge": 51520,
+  "Lucea": 54880,
+  "Negril": 56000,
+  "Orange Bay": 57120,
+  "Bethel Town (w/ Sav)": 57680,
+  "Green Island": 58240
+};
+
+// Seed CariMed with BOTH rate sheets
+// Always ensure CariMed has both rate sheets
+if (!clientProfiles['Cari-Med Group Ltd'] || !clientProfiles['Cari-Med Group Ltd'].rate_sheets ||
+    Object.keys(clientProfiles['Cari-Med Group Ltd'].rate_sheets||{}).length === 0) {
+  clientProfiles['Cari-Med Group Ltd'] = {
+    phone: '',
+    email: '',
+    address: '',
+    notes: '',
+    load_and_park: 2500,
+    effective_date: 'January 5, 2026',
+    rate_sheets: {
+      '5 Ton': FIVE_TON_RATES,
+      '2 Ton/Van': TWO_TON_RATES
+    }
+  };
+  saveClientProfiles();
+}
+
+function renderClientsGrid() {
+  var grid = document.getElementById('clientsGrid');
+  if (!grid) return;
+  var clients = getClients();
+  if (clients.length === 0) {
+    grid.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">No clients yet. Click <strong>+ Add Client</strong>.</div>';
+    return;
+  }
+  grid.innerHTML = clients.map(function(name) {
+    var profile = clientProfiles[name] || {};
+    var sheets = profile.rate_sheets || {};
+    var sheetNames = Object.keys(sheets);
+    var totalTrips = allTrips.filter(function(t) { return t.client === name; }).length;
+    var totalRev = allTrips.filter(function(t) { return t.client === name; }).reduce(function(a,t) { return a + (parseFloat(t.revenue)||0); }, 0);
+    return '<div class="card">' +
+      '<div class="card-header" style="background:var(--navy)">' +
+        '<div><div style="font-size:15px;font-weight:700;color:#fff">' + name + '</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">' + sheetNames.join(' · ') + '</div></div>' +
+        '<span class="badge b-active" style="font-size:10px">' + sheetNames.length + ' rate sheet' + (sheetNames.length!==1?'s':'') + '</span>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="drw-row"><span class="drw-lbl">Total Trips</span><span class="drw-val"><strong>' + totalTrips + '</strong></span></div>' +
+        '<div class="drw-row"><span class="drw-lbl">Total Revenue</span><span class="drw-val" style="color:var(--green)"><strong>' + fmtMoney(totalRev) + '</strong></span></div>' +
+        '<div class="drw-row"><span class="drw-lbl">Load & Park</span><span class="drw-val">JMD ' + Number(profile.load_and_park||0).toLocaleString() + '</span></div>' +
+        (profile.phone ? '<div class="drw-row"><span class="drw-lbl">Phone</span><span class="drw-val">' + profile.phone + '</span></div>' : '') +
+        '<div style="margin-top:0.8rem"><button class="btn-sm blue" data-cn="'+name+'" onclick="openClientDrawer(this.dataset.cn)">✏️ Edit Profile & Rates</button></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+var currentClientName = null;
+var currentEditSheetName = null;
+
+window.openClientDrawer = function(name) {
+  var isNew = !name;
+  currentClientName = name;
+  var profile = name ? (clientProfiles[name] || {}) : {};
+  var sheets = profile.rate_sheets || {};
+
+  document.getElementById('clientDrwTitle').textContent = isNew ? 'Add Client' : name;
+  var m = document.getElementById('clientModal');
+  if (m) { m.style.display = 'block'; document.body.style.overflow = 'hidden'; }
+
+  renderClientDrwBody(name, profile);
+};
+
+function renderClientDrwBody(name, profile) {
+  var sheets = profile.rate_sheets || {};
+  var sheetTabs = Object.keys(sheets).map(function(sheetName) {
+    return '<button class="ftab" style="font-size:11px" data-cn="'+encodeURIComponent(name||'')+'" data-sn="'+encodeURIComponent(sheetName)+'" onclick="editRateSheetBtn(this)">' + sheetName + ' <span style="font-size:10px;color:var(--muted)">' + Object.keys(sheets[sheetName]).length + ' routes</span></button>';
+  }).join('');
+
+  document.getElementById('clientDrwBody').innerHTML =
+    '<input type="hidden" id="cd-original-name" value="' + (name||'') + '" />' +
+    '<div class="drw-section"><div class="drw-sec-title">Client Details</div>' +
+    '<div class="sf"><label>Company Name</label><input class="field-input" id="cd-name" value="' + (name||'') + '" placeholder="e.g. Cari-Med Group Ltd" /></div>' +
+    '<div class="sf-row">' +
+      '<div class="sf"><label>Phone</label><input class="field-input" id="cd-phone" value="' + (profile.phone||'') + '" /></div>' +
+      '<div class="sf"><label>Email</label><input class="field-input" id="cd-email" value="' + (profile.email||'') + '" /></div>' +
+    '</div>' +
+    '<div class="sf"><label>Address</label><input class="field-input" id="cd-address" value="' + (profile.address||'') + '" /></div>' +
+    '<div class="sf-row">' +
+      '<div class="sf"><label>Load & Park Fee (JMD)</label><input class="field-input" id="cd-lap" type="number" value="' + (profile.load_and_park||0) + '" /></div>' +
+      '<div class="sf"><label>Effective Date</label><input class="field-input" id="cd-date" value="' + (profile.effective_date||'') + '" placeholder="e.g. January 5, 2026" /></div>' +
+    '</div>' +
+    '<div class="sf"><label>Notes</label><textarea class="field-input" id="cd-notes" rows="2">' + (profile.notes||'') + '</textarea></div>' +
+    '</div>' +
+    '<div class="drw-section"><div class="drw-sec-title" style="display:flex;align-items:center;justify-content:space-between">Rate Sheets <button class="btn-sm blue" onclick="addNewRateSheetBtn()">+ Add Sheet</button></div>' +
+    '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.8rem">' + (sheetTabs || '<div class="t-sub">No rate sheets yet. Click + Add Sheet.</div>') + '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:0.6rem;flex-wrap:wrap">' +
+      '<button class="drw-btn dark" onclick="saveClientDrawer()">💾 Save Client</button>' +
+      (name ? '<button class="drw-btn red" onclick="deleteClient(this.dataset.cn)" data-cn="'+name+'">🗑 Delete</button>' : '') +
+      '<button class="drw-btn outline" onclick="closeClientDrawer()">Cancel</button>' +
+    '</div>';
+}
+
+window.addNewRateSheet = function(clientName) {
+  piPrompt('Enter truck type / rate sheet name', 'e.g. 5 Ton, 2 Ton/Van, Flatbed', function(sheetName) {
+    // Save client first then open rate sheet editor
+    saveClientData(clientName || document.getElementById('cd-name').value.trim());
+    setTimeout(function() { editRateSheet(document.getElementById('cd-name').value.trim(), sheetName); }, 100);
+  });
+};
+
+window.editRateSheet = function(clientName, sheetName) {
+  var name = clientName || document.getElementById('cd-name').value.trim();
+  if (!name) { showToast('Save the client first', 'error'); return; }
+  saveClientData(name);
+
+  var profile = clientProfiles[name] || { rate_sheets: {} };
+  var routes = (profile.rate_sheets && profile.rate_sheets[sheetName]) ? profile.rate_sheets[sheetName] : {};
+  currentEditSheetName = sheetName;
+
+  var routeRows = Object.entries(routes).map(function(entry, i) {
+    return '<div class="rsr" style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.35rem">' +
+      '<input class="field-input rsr-name" style="flex:2;font-size:12px;padding:0.4rem 0.6rem" value="' + entry[0] + '" />' +
+      '<input class="field-input rsr-price" style="flex:1;font-size:12px;padding:0.4rem 0.6rem" type="number" value="' + entry[1] + '" />' +
+      '<button onclick="removeCPRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0.2rem">✕</button>' +
+    '</div>';
+  }).join('');
+
+  // Replace drawer body with rate sheet editor
+  document.getElementById('clientDrwBody').innerHTML =
+    '<div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem">' +
+      '<button class="btn-sm" onclick="backToClientProfile(this.dataset.cn)" data-cn="'+name+'">← Back</button>' +
+      '<div><div style="font-weight:700;font-size:14px">' + name + '</div><div style="font-size:12px;color:var(--muted)">Rate Sheet: ' + sheetName + '</div></div>' +
+    '</div>' +
+    '<div class="drw-note" style="font-size:12px">Edit routes and prices below. Changes save when you click Save Rate Sheet.</div>' +
+    '<div style="display:flex;gap:0.5rem;margin-bottom:0.6rem;margin-top:0.8rem">' +
+      '<input class="field-input" id="rs-search" placeholder="🔍 Filter routes..." style="flex:1;font-size:12px" oninput="filterRateSheetRows(this.value)" />' +
+      '<button class="btn-sm blue" onclick="addRSRow()">+ Row</button>' +
+    '</div>' +
+    '<div style="font-size:11px;display:flex;gap:0.5rem;font-weight:600;color:var(--muted);padding:0 0.2rem;margin-bottom:0.3rem"><span style="flex:2">Route</span><span style="flex:1">Price (JMD)</span><span style="width:24px"></span></div>' +
+    '<div id="rsRouteList" style="max-height:450px;overflow-y:auto">' + routeRows + '</div>' +
+    '<div style="display:flex;gap:0.6rem;margin-top:1rem;flex-wrap:wrap">' +
+      '<button class="drw-btn dark" onclick="saveRateSheetBtn(this)" data-cn="'+encodeURIComponent(name)+'" data-sn="'+encodeURIComponent(sheetName)+'">💾 Save Rate Sheet</button>' +
+      '<button class="drw-btn red" onclick="deleteRateSheetBtn(this)" data-cn="'+encodeURIComponent(name)+'" data-sn="'+encodeURIComponent(sheetName)+'">🗑 Delete Sheet</button>' +
+    '</div>';
+};
+
+window.addRSRow = function() {
+  var list = document.getElementById('rsRouteList');
+  var div = document.createElement('div');
+  div.className = 'rsr';
+  div.style.cssText = 'display:flex;align-items:center;gap:0.4rem;margin-bottom:0.35rem';
+  div.innerHTML = '<input class="field-input rsr-name" style="flex:2;font-size:12px;padding:0.4rem 0.6rem" placeholder="Route name" />' +
+    '<input class="field-input rsr-price" style="flex:1;font-size:12px;padding:0.4rem 0.6rem" type="number" placeholder="0" />' +
+    '<button onclick="removeCPRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0.2rem">✕</button>';
+  list.appendChild(div);
+  div.querySelector('.rsr-name').focus();
+};
+
+window.filterRateSheetRows = function(q) {
+  document.querySelectorAll('#rsRouteList .rsr').forEach(function(row) {
+    var name = row.querySelector('.rsr-name');
+    if (!name) return;
+    row.style.display = name.value.toLowerCase().includes(q.toLowerCase()) ? 'flex' : 'none';
+  });
+};
+
+window.saveRateSheet = function(clientName, sheetName) {
+  var routes = {};
+  document.querySelectorAll('#rsRouteList .rsr').forEach(function(row) {
+    var n = row.querySelector('.rsr-name');
+    var p = row.querySelector('.rsr-price');
+    if (n && p && n.value.trim()) routes[n.value.trim()] = parseFloat(p.value) || 0;
+  });
+  if (!clientProfiles[clientName]) clientProfiles[clientName] = { rate_sheets: {} };
+  if (!clientProfiles[clientName].rate_sheets) clientProfiles[clientName].rate_sheets = {};
+  clientProfiles[clientName].rate_sheets[sheetName] = routes;
+  saveClientProfiles();
+  showToast(sheetName + ' rate sheet saved — ' + Object.keys(routes).length + ' routes ✓');
+  backToClientProfile(clientName);
+};
+
+window.deleteRateSheet = function(clientName, sheetName) {
+  piConfirm('Delete the "' + sheetName + '" rate sheet for ' + clientName + '?', function() {
+  if (clientProfiles[clientName] && clientProfiles[clientName].rate_sheets) {
+    delete clientProfiles[clientName].rate_sheets[sheetName];
+    saveClientProfiles();
+    showToast(sheetName + ' deleted');
+    backToClientProfile(clientName);
+  }
+  });
+};
+
+window.backToClientProfile = function(name) {
+  var profile = clientProfiles[name] || {};
+  renderClientDrwBody(name, profile);
+};
+
+function saveClientData(newName) {
+  if (!newName) return;
+  var original = document.getElementById('cd-original-name') ? document.getElementById('cd-original-name').value : newName;
+  var existing = clientProfiles[original] || { rate_sheets: {} };
+  clientProfiles[newName] = {
+    phone:         document.getElementById('cd-phone') ? document.getElementById('cd-phone').value.trim() : (existing.phone||''),
+    email:         document.getElementById('cd-email') ? document.getElementById('cd-email').value.trim() : (existing.email||''),
+    address:       document.getElementById('cd-address') ? document.getElementById('cd-address').value.trim() : (existing.address||''),
+    load_and_park: document.getElementById('cd-lap') ? parseFloat(document.getElementById('cd-lap').value)||0 : (existing.load_and_park||0),
+    effective_date:document.getElementById('cd-date') ? document.getElementById('cd-date').value : (existing.effective_date||''),
+    notes:         document.getElementById('cd-notes') ? document.getElementById('cd-notes').value.trim() : (existing.notes||''),
+    rate_sheets:   existing.rate_sheets || {}
+  };
+  // Rename client if name changed
+  if (original && original !== newName && clientProfiles[original]) {
+    delete clientProfiles[original];
+    // Update clients list
+    var clients = getClients();
+    var idx = clients.indexOf(original);
+    if (idx >= 0) clients[idx] = newName;
+    saveClients(clients);
+  }
+  saveClientProfiles();
+}
+
+window.saveClientDrawer = function() {
+  var name = document.getElementById('cd-name') ? document.getElementById('cd-name').value.trim() : '';
+  if (!name) { showToast('Please enter a company name', 'error'); return; }
+  var original = document.getElementById('cd-original-name') ? document.getElementById('cd-original-name').value : '';
+  saveClientData(name);
+  // Add to clients list if new
+  var clients = getClients();
+  if (!clients.includes(name)) { clients.push(name); saveClients(clients); }
+  currentClientName = name;
+  renderClientsGrid();
+  closeClientDrawer();
+  showToast(original ? 'Client updated ✓' : name + ' added ✓');
+};
+
+window.deleteClient = function(name) {
+  piConfirm('Delete ' + name + ' and all their rate sheets? This cannot be undone.', function() {
+  delete clientProfiles[name];
+  saveClientProfiles();
+  var clients = getClients().filter(function(c) { return c !== name; });
+  saveClients(clients);
+  renderClientsGrid();
+  closeClientDrawer();
+  showToast(name + ' deleted');
+  });
+};
+
+function closeClientDrawer() {
+  var m = document.getElementById('clientModal');
+  if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+  currentClientName = null;
+}
+// Close modal when clicking outside the white box
+try {
+  document.getElementById('clientModal').addEventListener('click', function(e) {
+    if (e.target === this) closeClientDrawer();
+  });
+} catch(e) {}
+
+// Update trip drawer onTripClientChange to support multiple rate sheets
+window.onTripClientChange = function() {
+  var clientSel = document.getElementById('td-client');
+  var truckSel  = document.getElementById('td-truck');
+  var routeWrap = document.getElementById('td-route-wrap');
+  var routeSel  = document.getElementById('td-route');
+  var revInput  = document.getElementById('td-revenue');
+  if (!clientSel || !routeSel) return;
+
+  var client  = clientSel.value;
+  var profile = clientProfiles[client];
+
+  // Also add truck type selector if profile has rate sheets
+  var truckTypeWrap = document.getElementById('td-trucktype-wrap');
+  if (!truckTypeWrap && profile && profile.rate_sheets && Object.keys(profile.rate_sheets).length > 0) {
+    // Insert truck type selector before route
+    var routeWrapEl = document.getElementById('td-route-wrap');
+    if (routeWrapEl) {
+      var div = document.createElement('div');
+      div.className = 'sf';
+      div.id = 'td-trucktype-wrap';
+      div.innerHTML = '<label class="field-label">Rate Sheet / Truck Type</label><select class="field-input" id="td-trucktype"></select>';
+      routeWrapEl.parentNode.insertBefore(div, routeWrapEl);
+    }
+  }
+
+  if (profile && profile.rate_sheets && Object.keys(profile.rate_sheets).length > 0) {
+    var sheets = profile.rate_sheets;
+    var ttSel = document.getElementById('td-trucktype');
+    if (ttSel) {
+      ttSel.innerHTML = Object.keys(sheets).map(function(s) { return '<option value="' + s + '">' + s + '</option>'; }).join('');
+      ttSel.onchange = function() { loadRouteOptions(sheets[ttSel.value], routeWrap, routeSel, revInput); };
+      if (document.getElementById('td-trucktype-wrap')) document.getElementById('td-trucktype-wrap').style.display = 'block';
+      loadRouteOptions(sheets[Object.keys(sheets)[0]], routeWrap, routeSel, revInput);
+    }
+  } else if (routeWrap) {
+    routeWrap.style.display = 'none';
+    var ttw = document.getElementById('td-trucktype-wrap');
+    if (ttw) ttw.style.display = 'none';
+  }
+};
+
+function loadRouteOptions(routes, routeWrap, routeSel, revInput) {
+  if (!routes || Object.keys(routes).length === 0) { if(routeWrap)routeWrap.style.display='none'; return; }
+  if (routeWrap) routeWrap.style.display = 'block';
+  routeSel.innerHTML = '<option value="">— Select Route —</option>' +
+    Object.keys(routes).map(function(r) {
+      return '<option value="' + r + '" data-price="' + routes[r] + '">' + r + ' — JMD ' + Number(routes[r]).toLocaleString() + '</option>';
+    }).join('');
+  routeSel.onchange = function() {
+    var sel = routeSel.options[routeSel.selectedIndex];
+    var price = sel ? parseFloat(sel.dataset.price) || 0 : 0;
+    if (revInput && price > 0) { revInput.value = price; }
+    var destEl = document.getElementById('td-to');
+    if (destEl && sel && sel.value) destEl.value = sel.value;
+  };
+}
+
+// Load clients grid when switching to clients panel
+
+
+// ══ CUSTOM MODALS (replaces browser prompt/confirm which are blocked on Vercel) ══
+function piConfirm(msg, onYes, onNo) {
+  var wrap = document.createElement('div');
+  wrap.className = 'pi-modal-wrap';
+  wrap.innerHTML = '<div class="pi-modal">' +
+    '<div class="pi-modal-title">Confirm</div>' +
+    '<div class="pi-modal-msg">' + msg + '</div>' +
+    '<div class="pi-modal-btns">' +
+      '<button class="btn-outline" id="piNo">Cancel</button>' +
+      '<button class="btn-danger" id="piYes">Confirm</button>' +
+    '</div></div>';
+  document.body.appendChild(wrap);
+  wrap.querySelector('#piYes').onclick = function() { wrap.remove(); if(onYes) onYes(); };
+  wrap.querySelector('#piNo').onclick  = function() { wrap.remove(); if(onNo)  onNo();  };
+  wrap.onclick = function(e) { if(e.target===wrap){ wrap.remove(); if(onNo) onNo(); } };
+}
+
+function piPrompt(msg, placeholder, onOk, onCancel) {
+  var wrap = document.createElement('div');
+  wrap.className = 'pi-modal-wrap';
+  wrap.innerHTML = '<div class="pi-modal">' +
+    '<div class="pi-modal-title">' + msg + '</div>' +
+    '<input class="pi-modal-input" id="piInput" placeholder="' + (placeholder||'') + '" />' +
+    '<div class="pi-modal-btns">' +
+      '<button class="btn-outline" id="piCancel">Cancel</button>' +
+      '<button class="btn-primary" id="piOk">OK</button>' +
+    '</div></div>';
+  document.body.appendChild(wrap);
+  var input = wrap.querySelector('#piInput');
+  input.focus();
+  var doOk = function() { var v=input.value.trim(); wrap.remove(); if(v&&onOk) onOk(v); };
+  wrap.querySelector('#piOk').onclick = doOk;
+  wrap.querySelector('#piCancel').onclick = function() { wrap.remove(); if(onCancel) onCancel(); };
+  input.onkeydown = function(e) { if(e.key==='Enter') doOk(); if(e.key==='Escape') wrap.querySelector('#piCancel').click(); };
+}
+
+// ══ ROUTE SEARCH ACROSS CLIENTS ══
+window.searchRoutes = function(q) {
+  var resultsEl = document.getElementById('routeSearchResults');
+  if (!resultsEl) return;
+  if (!q || !q.trim()) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; return; }
+  q = q.trim().toLowerCase();
+  var results = [];
+  var clients = getClients();
+  clients.forEach(function(clientName) {
+    var profile = clientProfiles[clientName];
+    if (!profile || !profile.rate_sheets) return;
+    Object.keys(profile.rate_sheets).forEach(function(sheetName) {
+      var routes = profile.rate_sheets[sheetName];
+      Object.keys(routes).forEach(function(route) {
+        if (route.toLowerCase().includes(q)) {
+          results.push({ client: clientName, sheet: sheetName, route: route, price: routes[route] });
+        }
+      });
+    });
+  });
+  if (results.length === 0) {
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = '<div class="t-sub" style="padding:0.5rem 0">No routes matching "' + q + '" found.</div>';
+    return;
+  }
+  // Sort by price ascending
+  results.sort(function(a, b) { return a.price - b.price; });
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML =
+    '<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">' + results.length + ' result(s) for "' + q + '"</div>' +
+    '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">' +
+    '<thead><tr>' +
+      '<th style="text-align:left;padding:0.4rem 0.6rem;background:var(--bg);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Client</th>' +
+      '<th style="text-align:left;padding:0.4rem 0.6rem;background:var(--bg);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Truck Type</th>' +
+      '<th style="text-align:left;padding:0.4rem 0.6rem;background:var(--bg);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Route</th>' +
+      '<th style="text-align:right;padding:0.4rem 0.6rem;background:var(--bg);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Price (JMD)</th>' +
+    '</tr></thead><tbody>' +
+    results.map(function(r) {
+      return '<tr>' +
+        '<td style="padding:0.5rem 0.6rem;border-bottom:1px solid var(--border);font-weight:600">' + r.client + '</td>' +
+        '<td style="padding:0.5rem 0.6rem;border-bottom:1px solid var(--border)"><span class="badge b-driver">' + r.sheet + '</span></td>' +
+        '<td style="padding:0.5rem 0.6rem;border-bottom:1px solid var(--border)">' + r.route + '</td>' +
+        '<td style="padding:0.5rem 0.6rem;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--green)">JMD ' + Number(r.price).toLocaleString() + '</td>' +
+      '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+};
+
+
+// ══ EXPENSE CATEGORIES ══
+var defaultExpCats = ['Fuel','Maintenance','Salary','Tax','Insurance','Tolls','Staff Meals','Equipment','Vehicle Purchase','Other'];
+function getExpCats(){ return JSON.parse(localStorage.getItem('pi-trucking-exp-cats') || JSON.stringify(defaultExpCats)); }
+function saveExpCats(arr){ localStorage.setItem('pi-trucking-exp-cats', JSON.stringify(arr)); }
+
+function populateExpCatSelect(selected) {
+  var sel = document.getElementById('expCat');
+  if (!sel) return;
+  var cats = getExpCats();
+  sel.innerHTML = cats.map(function(cat) {
+    return '<option value="' + cat + '"' + (cat === selected ? ' selected' : '') + '>' + cat + '</option>';
+  }).join('');
+}
+
+window.addExpenseCategory = function() {
+  piPrompt('New Expense Category', 'e.g. Vehicle Purchase', function(name) {
+    var cats = getExpCats();
+    if (cats.includes(name)) { showToast('Category already exists', 'error'); return; }
+    cats.splice(cats.length - 1, 0, name);
+    saveExpCats(cats);
+    populateExpCatSelect(name);
+    showToast('"' + name + '" category added ✓');
+  });
+};
+
 // ══ AUTH ══
-var USERS = [{username:'admin',password:'pitrucking2025',name:'Admin',access:['overview','trips','fleet','staff','salary','financials','payslips','settings']}];
+var USERS = [{username:'admin',password:'pitrucking2025',name:'Admin',access:['overview','trips','fleet','staff','salary','financials','clients','settings']}];
 var currentUser = null;
 
 function doLogin() {
@@ -913,7 +1896,7 @@ function doLogin() {
   var found = null;
   // Check default admin
   if (u === 'admin' && p === 'pitrucking2025') {
-    found = {username:'admin',name:'Admin',access:['overview','trips','fleet','staff','salary','financials','payslips','settings']};
+    found = {username:'admin',name:'Admin',access:['overview','trips','fleet','staff','salary','financials','clients','settings']};
   }
   // Check DB users
   if (!found) {
@@ -942,7 +1925,7 @@ try{document.getElementById('lUser').onkeydown=function(e){if(e.key==='Enter')do
 ['lUser','lPass'].forEach(function(id){
   try{document.getElementById(id).oninput=function(){document.getElementById('lErr').classList.remove('show');document.getElementById('lUser').classList.remove('err');document.getElementById('lPass').classList.remove('err');};}catch(e){}
 });
-try{document.getElementById('logoutBtn').onclick=function(){if(confirm('Sign out?')){document.getElementById('app').classList.remove('show');document.getElementById('loginScreen').classList.remove('hide');document.getElementById('lUser').value='';document.getElementById('lPass').value='';currentUser=null;}};}catch(e){}
+try{document.getElementById('logoutBtn').onclick=function(){piConfirm('Sign out?',function(){document.getElementById('app').classList.remove('show');document.getElementById('loginScreen').classList.remove('hide');document.getElementById('lUser').value='';document.getElementById('lPass').value='';currentUser=null;});};}catch(e){}
 
 // ══ TOAST ══
 function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success')+' show';setTimeout(function(){t.classList.remove('show');},3000);}
@@ -957,7 +1940,7 @@ function avStyle(i){var x=i%avBg.length;return 'background:'+avBg[x]+';color:'+a
 function initials(name){return(name||'').split(' ').map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase();}
 
 // ══ PANEL SWITCHING ══
-var panelNames={overview:'Overview',trips:'Trips',fleet:'Fleet',staff:'Staff',salary:'Salary',financials:'Financials',payslips:'Payslips',settings:'Settings'};
+var panelNames={overview:'Overview',trips:'Trips',fleet:'Fleet',staff:'Staff',salary:'Salary',financials:'Financials',clients:'Clients',clients:'Clients',settings:'Settings'};
 function switchPanel(name){
   document.querySelectorAll('.nav-item').forEach(function(el){el.classList.toggle('active',el.dataset.panel===name);});
   document.querySelectorAll('.panel').forEach(function(el){el.classList.remove('active');});
@@ -965,7 +1948,9 @@ function switchPanel(name){
   document.getElementById('tbTitle').textContent=panelNames[name]||name;
   document.getElementById('content').scrollTop=0;
   if(name==='salary')renderSalary();
+  if(name==='clients')renderClientsGrid();
   if(name==='financials')renderFinancials();
+  if(name==='clients')renderClientsGrid();
   if(name==='settings')loadSettings();
   if(name==='payslips')loadPayslipHistory();
 }
@@ -1025,10 +2010,11 @@ function renderTrips(){
       '<td><div class="t-sub" style="max-width:120px;white-space:normal">'+(t.origin||'')+(t.origin&&t.destination?' → ':'')+( t.destination||'')+'</div></td>'+
       '<td><strong>'+fmtMoney(t.revenue)+'</strong></td>'+
       '<td><span class="badge '+(statusColors[t.status]||'b-pending')+'">'+t.status+'</span></td>'+
-      '<td><button class="btn-sm blue" data-trip-id="'+t.id+'">View</button></td>'+
+      '<td style="display:flex;gap:0.3rem">'+(t.amount_paid>0&&t.amount_paid>=t.revenue?'<span class="badge b-done" style="font-size:10px">Paid</span>':'<button class="btn-sm green" data-pay-trip-id="'+t.id+'">💰 Paid</button>')+'<button class="btn-sm blue" data-trip-id="'+t.id+'">View</button></td>'+
     '</tr>';
   }).join('');
   tbody.querySelectorAll('[data-trip-id]').forEach(function(btn){btn.onclick=function(){openTripDrawer(btn.dataset.tripId);};});
+  tbody.querySelectorAll('[data-pay-trip-id]').forEach(function(btn){btn.onclick=function(){openQuickPayDrawer(btn.dataset.payTripId);};});
 }
 
 document.querySelectorAll('#tripFilterTabs .ftab').forEach(function(btn){
@@ -1054,7 +2040,8 @@ function openTripDrawer(id){
     '<div class="sf"><label>Service Type</label><select class="field-input" id="td-service"><option value="">— Select Service —</option>'+buildServiceOpts(trip?trip.service_type:'')+' </select></div>'+
     '<div class="sf-row"><div class="sf"><label>From</label><input class="field-input" id="td-from" placeholder="Origin" value="'+(trip?trip.origin||'':'')+'" /></div>'+
     '<div class="sf"><label>To</label><input class="field-input" id="td-to" placeholder="Destination" value="'+(trip?trip.destination||'':'')+'" /></div></div>'+
-    '<div class="sf"><label>Client / Company</label><select class="field-input" id="td-client">'+buildClientOpts(trip?trip.client:'')+' </select></div>'+
+    '<div class="sf"><label>Client / Company</label><select class="field-input" id="td-client" onchange="onTripClientChange()">'+buildClientOpts(trip?trip.client:'')+' </select></div>'+
+    '<div class="sf" id="td-route-wrap" style="display:none"><label>Route</label><select class="field-input" id="td-route"></select></div>'+
     '</div>'+
     '<div class="drw-section"><div class="drw-sec-title">Revenue</div>'+
     '<div class="sf-row"><div class="sf"><label>Trip Revenue (JMD)</label><input class="field-input" id="td-revenue" type="number" placeholder="0" value="'+(trip?trip.revenue||'':'')+'" /></div>'+
@@ -1070,6 +2057,8 @@ function openTripDrawer(id){
     (trip?'<button class="drw-btn red" onclick="deleteTrip()">🗑 Delete</button>':'')+
     '<button class="drw-btn outline" onclick="closeTripDrawer()">Cancel</button>'+
     '</div>';
+  // Init route selector for existing trip
+  setTimeout(function(){onTripClientChange();if(trip&&trip.destination){var r=document.getElementById('td-route');if(r){for(var i=0;i<r.options.length;i++){if(r.options[i].value===trip.destination)r.selectedIndex=i;}}}},50);
   try{document.getElementById('tripOverlay').classList.add('open');}catch(e){}
   try{document.getElementById('tripDrawer').classList.add('open');}catch(e){}
 }
@@ -1101,8 +2090,9 @@ window.saveTrip=function(){
   }).catch(function(){showToast('Failed to save trip','error');});
 };
 window.deleteTrip=function(){
-  if(!currentTrip||!confirm('Delete trip '+currentTrip.ref+'?'))return;
+  if(!currentTrip)return; piConfirm('Delete trip '+currentTrip.ref+'?',function(){
   sbDelete('tr_trips',currentTrip.id).then(function(){allTrips=allTrips.filter(function(t){return t.id!==currentTrip.id;});updateTripCounts();renderTrips();closeTripDrawer();showToast('Trip deleted');});
+  });
 };
 function closeTripDrawer(){try{document.getElementById('tripOverlay').classList.remove('open');}catch(e){}try{document.getElementById('tripDrawer').classList.remove('open');}catch(e){}currentTrip=null;}
 try{document.getElementById('tripOverlay').onclick=closeTripDrawer;}catch(e){}
@@ -1149,14 +2139,25 @@ function renderFleet(){
             return '<div class="maint-item"><div style="display:flex;align-items:center"><div class="maint-dot" style="background:'+color+'"></div>'+m.name+'</div><div class="t-sub">'+(m.next_due?fmtDate(m.next_due):'No date')+'</div></div>';
           }).join('')+
         '</div>'+
-        '<div style="display:flex;gap:0.4rem">'+
+        '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">'+
           '<button class="btn-sm blue" data-fleet-id="'+f.id+'">Edit</button>'+
           '<button class="btn-sm" data-fleet-trip="'+f.truck_id+'" onclick="switchPanel(\'trips\')">View Trips</button>'+
+          '<button class="btn-sm red" data-fleet-del-id="'+f.id+'" data-fleet-del-name="'+f.truck_id+'">🗑 Delete</button>'+
         '</div>'+
       '</div>'+
     '</div>';
   }).join('');
   grid.querySelectorAll('[data-fleet-id]').forEach(function(btn){btn.onclick=function(){openFleetDrawer(btn.dataset.fleetId);};});
+  grid.querySelectorAll('[data-fleet-del-id]').forEach(function(btn){
+    btn.onclick=function(){
+      piConfirm('Delete '+btn.dataset.fleetDelName+'? This cannot be undone.', function(){
+      sbDelete('tr_fleet',btn.dataset.fleetDelId).then(function(){
+        allFleet=allFleet.filter(function(f){return f.id!==btn.dataset.fleetDelId;});
+        renderFleet();showToast(btn.dataset.fleetDelName+' deleted');
+      }).catch(function(){showToast('Failed to delete','error');});
+      });
+    };
+  });
 }
 
 function openFleetDrawer(id){
@@ -1218,8 +2219,9 @@ window.saveFleet=function(){
   }).catch(function(){showToast('Failed to save truck','error');});
 };
 window.deleteFleet=function(){
-  if(!currentFleet||!confirm('Remove '+currentFleet.truck_id+'?'))return;
+  if(!currentFleet)return; piConfirm('Remove '+currentFleet.truck_id+'?',function(){
   sbDelete('tr_fleet',currentFleet.id).then(function(){allFleet=allFleet.filter(function(f){return f.id!==currentFleet.id;});renderFleet();closeFleetDrawer();showToast('Truck removed');});
+  });
 };
 function closeFleetDrawer(){try{document.getElementById('fleetOverlay').classList.remove('open');}catch(e){}try{document.getElementById('fleetDrawer').classList.remove('open');}catch(e){}currentFleet=null;}
 try{document.getElementById('fleetOverlay').onclick=closeFleetDrawer;}catch(e){}
@@ -1300,8 +2302,9 @@ window.saveStaff=function(){
   }).catch(function(){showToast('Failed to save','error');});
 };
 window.deleteStaff=function(){
-  if(!currentStaff||!confirm('Remove '+currentStaff.name+'?'))return;
+  if(!currentStaff)return; piConfirm('Remove '+currentStaff.name+'?',function(){
   sbDelete('tr_staff',currentStaff.id).then(function(){allStaff=allStaff.filter(function(s){return s.id!==currentStaff.id;});renderStaff();closeStaffDrawer();showToast('Staff removed');});
+  });
 };
 function closeStaffDrawer(){try{document.getElementById('staffOverlay').classList.remove('open');}catch(e){}try{document.getElementById('staffDrawer').classList.remove('open');}catch(e){}currentStaff=null;}
 try{document.getElementById('staffOverlay').onclick=closeStaffDrawer;}catch(e){}
@@ -1436,7 +2439,7 @@ function openExpenseDrawer(id){
   document.getElementById('expDrwTitle').textContent=exp?'Edit Expense':'Add Expense';
   document.getElementById('expId').value=exp?exp.id:'';
   document.getElementById('expDate').value=exp?(exp.trip_date||''):new Date().toISOString().split('T')[0];
-  document.getElementById('expCat').value=exp?exp.category||'Fuel':'Fuel';
+  populateExpCatSelect(exp?exp.category||'Fuel':'Fuel');
   document.getElementById('expDesc').value=exp?exp.description||'':'';
   document.getElementById('expAmt').value=exp?exp.amount||'':'';
   document.getElementById('expDeleteBtn').style.display=exp?'flex':'none';
@@ -1455,8 +2458,9 @@ window.saveExpense=function(){
   }).catch(function(){showToast('Failed','error');});
 };
 window.deleteExpense=function(){
-  if(!currentExp||!confirm('Delete this expense?'))return;
+  if(!currentExp)return; piConfirm('Delete this expense?',function(){
   sbDelete('tr_expenses',currentExp.id).then(function(){allExpenses=allExpenses.filter(function(e){return e.id!==currentExp.id;});renderExpenses();closeExpDrawer();showToast('Deleted');});
+  });
 };
 function closeExpDrawer(){try{document.getElementById('expOverlay').classList.remove('open');}catch(e){}try{document.getElementById('expDrawer').classList.remove('open');}catch(e){}currentExp=null;}
 try{document.getElementById('expOverlay').onclick=closeExpDrawer;}catch(e){}
@@ -1497,13 +2501,14 @@ function renderRecurring(){
 }
 
 window.markRecurringPaid=function(id,name,amount){
-  if(!confirm('Mark "'+name+'" as paid and add JMD '+Number(amount).toLocaleString()+' to expenses?'))return;
+  piConfirm('Mark "'+name+'" as paid and add JMD '+Number(amount).toLocaleString()+' to expenses?',function(){
   var data={trip_date:new Date().toISOString().split('T')[0],category:'Recurring',description:name+' (recurring)',amount:parseFloat(amount)||0,truck_id:''};
   sbPost('tr_expenses',data).then(function(result){
     var saved=Array.isArray(result)?result[0]:result;
     if(saved&&saved.id)allExpenses.unshift(saved);
     renderExpenses();showToast(name+' marked paid and added to expenses ✓');
   }).catch(function(){showToast('Failed','error');});
+  });
 };
 function openRecurringDrawer(id){
   var rec=id?allRecurring.find(function(r){return r.id===id;}):null;
@@ -1532,8 +2537,9 @@ window.saveRecurring=function(){
   }).catch(function(){showToast('Failed','error');});
 };
 window.deleteRecurring=function(){
-  if(!currentRec||!confirm('Delete?'))return;
+  if(!currentRec)return; piConfirm('Delete this recurring expense?',function(){
   sbDelete('tr_recurring',currentRec.id).then(function(){allRecurring=allRecurring.filter(function(r){return r.id!==currentRec.id;});renderRecurring();closeRecDrawer();showToast('Deleted');});
+  });
 };
 function closeRecDrawer(){try{document.getElementById('recOverlay').classList.remove('open');}catch(e){}try{document.getElementById('recDrawer').classList.remove('open');}catch(e){}currentRec=null;}
 try{document.getElementById('recOverlay').onclick=closeRecDrawer;}catch(e){}
@@ -1741,7 +2747,7 @@ window.saveSettings=function(){
 // Users
 var allUsers=[];
 var currentUser2=null;
-var allTabs=['overview','trips','fleet','staff','salary','financials','payslips','settings'];
+var allTabs=['overview','trips','fleet','staff','salary','financials','clients','settings'];
 
 function loadUsers(){
   var stored=JSON.parse(localStorage.getItem('pi-trucking-users')||'[]');
@@ -1797,10 +2803,11 @@ window.saveUser=function(){
   renderUsers();closeUserDrawer();showToast(currentUser2?'User updated ✓':'User added ✓');
 };
 window.deleteUser=function(){
-  if(!currentUser2||!confirm('Delete user '+currentUser2.username+'?'))return;
+  if(!currentUser2)return; piConfirm('Delete user '+currentUser2.username+'?',function(){
   allUsers=allUsers.filter(function(u){return u.username!==currentUser2.username;});
   localStorage.setItem('pi-trucking-users',JSON.stringify(allUsers));
   renderUsers();closeUserDrawer();showToast('User deleted');
+  });
 };
 function closeUserDrawer(){try{document.getElementById('userOverlay').classList.remove('open');}catch(e){}try{document.getElementById('userDrawer').classList.remove('open');}catch(e){}currentUser2=null;}
 try{document.getElementById('userOverlay').onclick=closeUserDrawer;}catch(e){}
