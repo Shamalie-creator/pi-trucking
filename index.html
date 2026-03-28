@@ -415,17 +415,50 @@
           <div class="drw-body">
             <input type="hidden" id="fleetId" />
             <div class="sf"><label>Truck Name / ID</label><input id="fTruckId" placeholder="e.g. Truck 1 or T-001" /></div>
-            <div class="sf"><label>License Plate</label><input id="fPlate" placeholder="e.g. AB 1234" /></div>
-            <div class="sf"><label>Make & Model</label><input id="fModel" placeholder="e.g. Isuzu NQR" /></div>
             <div class="sf-row">
-              <div class="sf"><label>Year</label><input id="fYear" type="number" placeholder="2018" /></div>
+              <div class="sf"><label>License Plate</label><input id="fPlate" placeholder="e.g. TMP0513" /></div>
               <div class="sf"><label>Status</label>
                 <select id="fStatus"><option value="Active">Active</option><option value="In Shop">In Shop</option><option value="Inactive">Inactive</option></select>
               </div>
             </div>
+            <div class="sf-row">
+              <div class="sf"><label>Make</label><input id="fMake" placeholder="e.g. Isuzu" /></div>
+              <div class="sf"><label>Model</label><input id="fModel" placeholder="e.g. NPR / ELF" /></div>
+            </div>
+            <div class="sf-row">
+              <div class="sf"><label>Year</label><input id="fYear" type="number" placeholder="2019" /></div>
+              <div class="sf"><label>Colour</label><input id="fColour" placeholder="e.g. White" /></div>
+            </div>
+            <div class="sf-row">
+              <div class="sf"><label>Engine No.</label><input id="fEngine" placeholder="e.g. 4JZ1102V66" /></div>
+              <div class="sf"><label>Chassis No.</label><input id="fChassis" placeholder="e.g. NPR887000513" /></div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:0.8rem 0 0.4rem;border-bottom:1px solid var(--border);padding-bottom:0.3rem">Documents & Expiry Dates</div>
+            <div class="sf-row">
+              <div class="sf"><label>Fitness Cert. No.</label><input id="fFitness" placeholder="e.g. 202747" /></div>
+              <div class="sf"><label>Fitness Expiry</label><input id="fFitnessExp" type="date" /></div>
+            </div>
+            <div class="sf-row">
+              <div class="sf"><label>Insurance Provider</label><input id="fInsurer" placeholder="e.g. Sagicor, JN General" /></div>
+              <div class="sf"><label>Insurance Expiry</label><input id="fInsuranceExp" type="date" /></div>
+            </div>
+            <div class="sf-row">
+              <div class="sf"><label>Registration No.</label><input id="fRegNo" placeholder="e.g. TMP0513" /></div>
+              <div class="sf"><label>Registration Expiry</label><input id="fRegExp" type="date" /></div>
+            </div>
+            <div class="sf-row">
+              <div class="sf"><label>Current Odometer (km)</label><input id="fOdometer" type="number" placeholder="e.g. 431841" /></div>
+              <div class="sf"><label>Fuel Type</label>
+                <select id="fFuel"><option value="Diesel">Diesel</option><option value="Petrol">Petrol</option><option value="CNG">CNG</option></select>
+              </div>
+            </div>
             <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);margin-bottom:0.6rem;margin-top:0.4rem">Maintenance Schedule</div>
             <div id="maintSchedule"></div>
-            <button class="btn-outline" style="width:100%;margin-bottom:1rem;font-size:12px" onclick="addMaintItem()">+ Add Maintenance Item</button>
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+              <button class="btn-outline" style="flex:1;font-size:12px" onclick="addMaintItem()">+ Add Item</button>
+              <button class="btn-outline" style="flex:1;font-size:12px;border-color:var(--gold);color:var(--gold)" onclick="loadIsuzuSchedule()">🔧 Isuzu NPR</button>
+              <button class="btn-outline" style="flex:1;font-size:12px;border-color:var(--gold);color:var(--gold)" onclick="loadToyotaHiaceSchedule()">🔧 Toyota Hiace</button>
+            </div>
             <div style="display:flex;gap:0.6rem">
               <button class="drw-btn dark" onclick="saveFleet()">💾 Save Truck</button>
               <button class="drw-btn outline" id="fleetDeleteBtn" onclick="deleteFleet()" style="display:none">🗑 Delete</button>
@@ -1241,6 +1274,30 @@ window.addNewRateSheetBtn = function(){ var el=document.getElementById('cd-name'
 window.saveRateSheetBtn = function(btn){ saveRateSheet(decodeURIComponent(btn.dataset.cn), decodeURIComponent(btn.dataset.sn)); };
 window.deleteRateSheetBtn = function(btn){ deleteRateSheet(decodeURIComponent(btn.dataset.cn), decodeURIComponent(btn.dataset.sn)); };
 window.editRateSheetBtn = function(btn){ editRateSheet(decodeURIComponent(btn.dataset.cn), decodeURIComponent(btn.dataset.sn)); };
+
+window.loadIsuzuSchedule = function() {
+  piConfirm('Load the standard Isuzu NPR/ELF diesel maintenance schedule? This will replace any existing items.', function() {
+    var today = new Date().toISOString().split('T')[0];
+    maintItems = [
+      {name:'Engine Oil & Filter Change', interval_days:90, last_done:'', next_due:''},
+      {name:'Air Filter Check', interval_days:180, last_done:'', next_due:''},
+      {name:'Air Filter Replacement', interval_days:365, last_done:'', next_due:''},
+      {name:'Fuel Filter Replacement', interval_days:365, last_done:'', next_due:''},
+      {name:'Coolant Level Check', interval_days:30, last_done:'', next_due:''},
+      {name:'Coolant Full Replacement', interval_days:730, last_done:'', next_due:''},
+      {name:'Brake Inspection', interval_days:180, last_done:'', next_due:''},
+      {name:'Brake Fluid Replacement', interval_days:365, last_done:'', next_due:''},
+      {name:'Tyre Check & Rotation', interval_days:90, last_done:'', next_due:''},
+      {name:'Battery Check', interval_days:180, last_done:'', next_due:''},
+      {name:'Drive Belt Inspection', interval_days:180, last_done:'', next_due:''},
+      {name:'Transmission Fluid', interval_days:545, last_done:'', next_due:''},
+      {name:'Certificate of Fitness', interval_days:365, last_done:'', next_due:'2028-11-16'}
+    ];
+    renderMaintItems();
+    showToast('Isuzu NPR schedule loaded — set the "Last Done" dates for each item ✓');
+  });
+};
+
 window.removeCPRow = function(btn){ var row=btn.parentElement; if(row)row.remove(); };
 window.closeClientModal = function(){ var m=document.getElementById("addClientModal"); if(m)m.remove(); };
 window.closeQuickPay = function(){ var m=document.getElementById("quickPayModal"); if(m)m.remove(); };
@@ -2189,6 +2246,21 @@ function renderFleet(){
       var diff=Math.ceil((due-today)/(1000*60*60*24));
       if(diff<0)overdueCount++;else if(diff<=14)dueCount++;
     });
+    // Check all document expiries
+    var fitnessAlert='';
+    var ALERT_STYLE='padding:0.4rem 0.7rem;font-size:11px;margin-bottom:0.4rem';
+    function docAlert(label, expiry, warnDays) {
+      if(!expiry) return '';
+      var exp=new Date(expiry);
+      var diff=Math.ceil((exp-today)/(1000*60*60*24));
+      if(diff<0) return '<div class="alert-banner error" style="'+ALERT_STYLE+'">⚠️ '+label+' EXPIRED '+Math.abs(diff)+' days ago</div>';
+      if(diff<=warnDays) return '<div class="alert-banner warn" style="'+ALERT_STYLE+'">📋 '+label+' expires in '+diff+' days</div>';
+      return '';
+    }
+    fitnessAlert =
+      docAlert('Certificate of Fitness', f.fitness_expiry, 30) +
+      docAlert('Insurance', f.insurance_expiry, 30) +
+      docAlert('Registration', f.reg_expiry, 30);
     var statusColor=f.status==='Active'?'b-active':f.status==='In Shop'?'b-pending':'b-inactive';
     return '<div class="fleet-card">'+
       '<div class="fleet-card-head">'+
@@ -2196,7 +2268,14 @@ function renderFleet(){
         '<span class="badge '+statusColor+'">'+f.status+'</span>'+
       '</div>'+
       '<div class="fleet-card-body">'+
-        '<div class="t-sub" style="margin-bottom:0.8rem">'+f.model+' '+(f.year||'')+'</div>'+
+        '<div class="t-sub" style="margin-bottom:0.4rem">'+(f.make?f.make+' ':'')+f.model+' '+(f.year||'')+'</div>'+
+        (f.engine_no?'<div class="t-sub" style="margin-bottom:0.4rem;font-size:11px">Engine: '+f.engine_no+(f.chassis_no?' | Chassis: '+f.chassis_no:'')+'</div>':'')+
+        '<div style="margin-bottom:0.8rem;font-size:11px;color:var(--muted);">'+
+          (f.fitness_expiry?'<div>📋 Fitness: '+fmtDate(f.fitness_expiry)+'</div>':'')+
+          (f.insurance_expiry?'<div>🛡 Insurance: '+fmtDate(f.insurance_expiry)+(f.insurer?' ('+f.insurer+')':'')+'</div>':'')+
+          (f.reg_expiry?'<div>📝 Registration: '+fmtDate(f.reg_expiry)+'</div>':'')+
+        '</div>'+
+        fitnessAlert+
         (overdueCount>0?'<div class="alert-banner error" style="padding:0.5rem 0.8rem;font-size:12px;margin-bottom:0.6rem">⚠️ '+overdueCount+' maintenance item(s) OVERDUE</div>':'')+ 
         (dueCount>0&&!overdueCount?'<div class="alert-banner warn" style="padding:0.5rem 0.8rem;font-size:12px;margin-bottom:0.6rem">🔔 '+dueCount+' item(s) due within 14 days</div>':'')+
         '<div style="margin-bottom:0.8rem">'+
@@ -2238,8 +2317,20 @@ function openFleetDrawer(id){
   document.getElementById('fleetId').value=fleet?fleet.id:'';
   document.getElementById('fTruckId').value=fleet?fleet.truck_id||'':'';
   document.getElementById('fPlate').value=fleet?fleet.plate||'':'';
+  if(document.getElementById('fMake'))document.getElementById('fMake').value=fleet?fleet.make||'':'';
   document.getElementById('fModel').value=fleet?fleet.model||'':'';
   document.getElementById('fYear').value=fleet?fleet.year||'':'';
+  if(document.getElementById('fColour'))document.getElementById('fColour').value=fleet?fleet.colour||'':'';
+  if(document.getElementById('fEngine'))document.getElementById('fEngine').value=fleet?fleet.engine_no||'':'';
+  if(document.getElementById('fChassis'))document.getElementById('fChassis').value=fleet?fleet.chassis_no||'':'';
+  if(document.getElementById('fFitness'))document.getElementById('fFitness').value=fleet?fleet.fitness_no||'':'';
+  if(document.getElementById('fFitnessExp'))document.getElementById('fFitnessExp').value=fleet?fleet.fitness_expiry||'':'';
+  if(document.getElementById('fInsurer'))document.getElementById('fInsurer').value=fleet?fleet.insurer||'':'';
+  if(document.getElementById('fInsuranceExp'))document.getElementById('fInsuranceExp').value=fleet?fleet.insurance_expiry||'':'';
+  if(document.getElementById('fRegNo'))document.getElementById('fRegNo').value=fleet?fleet.reg_no||'':'';
+  if(document.getElementById('fRegExp'))document.getElementById('fRegExp').value=fleet?fleet.reg_expiry||'':'';
+  if(document.getElementById('fOdometer'))document.getElementById('fOdometer').value=fleet?fleet.odometer||'':'';
+  if(document.getElementById('fFuel'))document.getElementById('fFuel').value=fleet?fleet.fuel_type||'Diesel':'Diesel';
   document.getElementById('fStatus').value=fleet?fleet.status||'Active':'Active';
   document.getElementById('fleetDeleteBtn').style.display=fleet?'flex':'none';
   renderMaintItems();
@@ -2278,7 +2369,27 @@ window.updateNextDue=function(i){
 window.saveFleet=function(){
   var name=document.getElementById('fTruckId').value.trim();
   if(!name){showToast('Please enter a truck ID','error');return;}
-  var data={truck_id:name,plate:document.getElementById('fPlate').value.trim(),model:document.getElementById('fModel').value.trim(),year:document.getElementById('fYear').value,status:document.getElementById('fStatus').value,maintenance:maintItems};
+  var fitnessExpVal = document.getElementById('fFitnessExp') ? document.getElementById('fFitnessExp').value : '';
+  var data={
+    truck_id:name,
+    plate:document.getElementById('fPlate').value.trim(),
+    make:document.getElementById('fMake')?document.getElementById('fMake').value.trim():'',
+    model:document.getElementById('fModel').value.trim(),
+    year:document.getElementById('fYear').value,
+    colour:document.getElementById('fColour')?document.getElementById('fColour').value.trim():'',
+    engine_no:document.getElementById('fEngine')?document.getElementById('fEngine').value.trim():'',
+    chassis_no:document.getElementById('fChassis')?document.getElementById('fChassis').value.trim():'',
+    fitness_no:document.getElementById('fFitness')?document.getElementById('fFitness').value.trim():'',
+    fitness_expiry:fitnessExpVal,
+    insurer:document.getElementById('fInsurer')?document.getElementById('fInsurer').value.trim():'',
+    insurance_expiry:document.getElementById('fInsuranceExp')?document.getElementById('fInsuranceExp').value:'',
+    reg_no:document.getElementById('fRegNo')?document.getElementById('fRegNo').value.trim():'',
+    reg_expiry:document.getElementById('fRegExp')?document.getElementById('fRegExp').value:'',
+    odometer:document.getElementById('fOdometer')?parseFloat(document.getElementById('fOdometer').value)||0:0,
+    fuel_type:document.getElementById('fFuel')?document.getElementById('fFuel').value:'Diesel',
+    status:document.getElementById('fStatus').value,
+    maintenance:maintItems
+  };
   var existingId=document.getElementById('fleetId').value;
   var p=existingId?sbUpdate('tr_fleet',existingId,data):sbPost('tr_fleet',data);
   p.then(function(result){
@@ -2921,6 +3032,16 @@ function loadOverview(){
         if(diff<0)alerts.push({type:'error',msg:'⚠️ '+f.truck_id+': '+m.name+' is OVERDUE by '+Math.abs(diff)+' days'});
         else if(diff<=7)alerts.push({type:'warn',msg:'🔔 '+f.truck_id+': '+m.name+' due in '+diff+' days'});
       });
+      // Doc expiry alerts
+      function docOvAlert(label, expiry) {
+        if(!expiry) return;
+        var diff=Math.ceil((new Date(expiry)-today2)/(1000*60*60*24));
+        if(diff<0) alerts.push({type:'error',msg:'🚨 '+f.truck_id+': '+label+' has EXPIRED'});
+        else if(diff<=30) alerts.push({type:'warn',msg:'📋 '+f.truck_id+': '+label+' expires in '+diff+' days'});
+      }
+      docOvAlert('Certificate of Fitness', f.fitness_expiry);
+      docOvAlert('Insurance', f.insurance_expiry);
+      docOvAlert('Registration', f.reg_expiry);
     });
     allRecurring.forEach(function(r){
       var dueDay=parseInt(r.due_day)||1;
@@ -2958,6 +3079,113 @@ function loadOverview(){
   }
 }
 
+
+// ══ PRE-SEED FLEET ON FIRST LOAD ══
+function seedDefaultFleet() {
+  // Only seed if fleet table is empty
+  sbGet('tr_fleet').then(function(data) {
+    if (Array.isArray(data) && data.length > 0) return; // already has trucks
+
+    var truck1 = {
+      truck_id: 'Truck 1',
+      plate: 'TMP0513',
+      make: 'Isuzu',
+      model: 'NPR / ELF',
+      year: '2019',
+      colour: 'White',
+      engine_no: '4JZ1102V66',
+      chassis_no: 'NPR887000513',
+      fitness_no: '202747',
+      fitness_expiry: '2028-11-16',
+      odometer: 431841,
+      fuel_type: 'Diesel',
+      status: 'Active',
+      maintenance: [
+        {name:'Engine Oil & Filter Change', interval_days:90, last_done:'', next_due:''},
+        {name:'Air Filter Check', interval_days:180, last_done:'', next_due:''},
+        {name:'Air Filter Replacement', interval_days:365, last_done:'', next_due:''},
+        {name:'Fuel Filter Replacement', interval_days:365, last_done:'', next_due:''},
+        {name:'Coolant Level Check', interval_days:30, last_done:'', next_due:''},
+        {name:'Coolant Full Replacement', interval_days:730, last_done:'', next_due:''},
+        {name:'Brake Inspection', interval_days:180, last_done:'', next_due:''},
+        {name:'Brake Fluid Replacement', interval_days:365, last_done:'', next_due:''},
+        {name:'Tyre Check & Rotation', interval_days:90, last_done:'', next_due:''},
+        {name:'Battery Check', interval_days:180, last_done:'', next_due:''},
+        {name:'Drive Belt Inspection', interval_days:180, last_done:'', next_due:''},
+        {name:'Transmission Fluid', interval_days:545, last_done:'', next_due:''},
+        {name:'Certificate of Fitness', interval_days:365, last_done:'2025-11-17', next_due:'2028-11-16'}
+      ]
+    };
+
+    var truck2 = {
+      truck_id: 'Truck 2',
+      plate: 'CP2057',
+      make: 'Toyota',
+      model: 'Hiace Regiusace',
+      year: '2015',
+      colour: 'Grey',
+      engine_no: '1KD2539841',
+      chassis_no: 'KDH2015018389',
+      fitness_no: '473344',
+      fitness_expiry: '2026-09-24',
+      odometer: 278161,
+      fuel_type: 'Diesel',
+      status: 'Active',
+      maintenance: [
+        {name:'Engine Oil & Filter Change', interval_days:90, last_done:'', next_due:''},
+        {name:'Air Filter Check', interval_days:180, last_done:'', next_due:''},
+        {name:'Air Filter Replacement', interval_days:365, last_done:'', next_due:''},
+        {name:'Fuel Filter Replacement', interval_days:365, last_done:'', next_due:''},
+        {name:'Coolant Level Check', interval_days:30, last_done:'', next_due:''},
+        {name:'Coolant Full Replacement', interval_days:730, last_done:'', next_due:''},
+        {name:'Brake Inspection', interval_days:180, last_done:'', next_due:''},
+        {name:'Brake Fluid Replacement', interval_days:365, last_done:'', next_due:''},
+        {name:'Tyre Check & Rotation', interval_days:90, last_done:'', next_due:''},
+        {name:'Battery Check', interval_days:180, last_done:'', next_due:''},
+        {name:'Timing Belt Inspection', interval_days:365, last_done:'', next_due:''},
+        {name:'Glow Plugs Check', interval_days:545, last_done:'', next_due:''},
+        {name:'Certificate of Fitness', interval_days:365, last_done:'2026-03-25', next_due:'2026-09-24'}
+      ]
+    };
+
+    // Post both trucks
+    sbPost('tr_fleet', truck1).then(function(r1) {
+      var saved1 = Array.isArray(r1) ? r1[0] : r1;
+      if (saved1 && saved1.id) allFleet.push(saved1);
+      sbPost('tr_fleet', truck2).then(function(r2) {
+        var saved2 = Array.isArray(r2) ? r2[0] : r2;
+        if (saved2 && saved2.id) allFleet.push(saved2);
+        renderFleet();
+        loadOverview();
+        showToast('Both trucks pre-loaded from fitness certificates ✓');
+      });
+    });
+  }).catch(function() {});
+}
+
+// Add Toyota Hiace schedule option
+window.loadToyotaHiaceSchedule = function() {
+  piConfirm('Load the standard Toyota Hiace / Regiusace diesel maintenance schedule?', function() {
+    maintItems = [
+      {name:'Engine Oil & Filter Change', interval_days:90, last_done:'', next_due:''},
+      {name:'Air Filter Check', interval_days:180, last_done:'', next_due:''},
+      {name:'Air Filter Replacement', interval_days:365, last_done:'', next_due:''},
+      {name:'Fuel Filter Replacement', interval_days:365, last_done:'', next_due:''},
+      {name:'Coolant Level Check', interval_days:30, last_done:'', next_due:''},
+      {name:'Coolant Full Replacement', interval_days:730, last_done:'', next_due:''},
+      {name:'Brake Inspection', interval_days:180, last_done:'', next_due:''},
+      {name:'Brake Fluid Replacement', interval_days:365, last_done:'', next_due:''},
+      {name:'Tyre Check & Rotation', interval_days:90, last_done:'', next_due:''},
+      {name:'Battery Check', interval_days:180, last_done:'', next_due:''},
+      {name:'Timing Belt Inspection', interval_days:365, last_done:'', next_due:''},
+      {name:'Glow Plugs Check', interval_days:545, last_done:'', next_due:''},
+      {name:'Certificate of Fitness', interval_days:365, last_done:'', next_due:''}
+    ];
+    renderMaintItems();
+    showToast('Toyota Hiace schedule loaded ✓');
+  });
+};
+
 // ══ INIT ══
 function initDashboard(){
   var now=new Date();
@@ -2976,6 +3204,7 @@ function initDashboard(){
 
   Promise.all([loadTrips(),loadFleet(),loadStaff(),loadExpenses(),loadRecurring()]).then(function(){
     loadOverview();
+    seedDefaultFleet();
   });
 
   setInterval(function(){loadTrips().then(function(){loadOverview();});},60000);
