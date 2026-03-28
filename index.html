@@ -613,7 +613,7 @@
           </div>
           <div class="card">
             <div class="card-header"><div class="card-title">Revenue by Trip</div></div>
-            <div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>Date</th><th>Service</th><th>Client</th><th>Amount</th><th>Paid</th><th>Outstanding</th><th>Method</th></tr></thead>
+            <div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>Date</th><th>Truck</th><th>Destination</th><th>Client</th><th>Amount</th><th>Paid</th><th>Outstanding</th><th>Method</th></tr></thead>
             <tbody id="revTableBody"><tr><td colspan="8" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div>
           </div>
         </div>
@@ -2114,6 +2114,7 @@ function refreshData(){
 
 // ══ TRIPS ══
 var tripFilter='all',tripSearch='',tripMonthFilter='',tripTruckFilterVal='',tripSort='date_desc',currentTrip=null;
+var revPeriod='all';
 
 function loadTrips(){
   return sbGet('tr_trips').then(function(data){
@@ -2777,6 +2778,16 @@ window.deleteRecurring=function(){
 function closeRecDrawer(){try{document.getElementById('recOverlay').classList.remove('open');}catch(e){}try{document.getElementById('recDrawer').classList.remove('open');}catch(e){}currentRec=null;}
 try{document.getElementById('recOverlay').onclick=closeRecDrawer;}catch(e){}
 
+// Revenue period buttons
+document.querySelectorAll('[data-p]').forEach(function(btn){
+  btn.onclick=function(){
+    document.querySelectorAll('[data-p]').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    revPeriod=btn.dataset.p;
+    renderRevenue();
+  };
+});
+
 // Financials tab switching
 document.querySelectorAll('.fin-tab').forEach(function(tab){
   tab.onclick=function(){
@@ -2794,18 +2805,39 @@ function renderFinancials(){
 function renderRevenue(){
   var tbody=document.getElementById('revTableBody');
   if(!tbody)return;
-  if(allTrips.length===0){tbody.innerHTML='<tr><td colspan="8" class="empty-state">No trips logged yet.</td></tr>';return;}
+  if(allTrips.length===0){tbody.innerHTML='<tr><td colspan="9" class="empty-state">No trips logged yet.</td></tr>';return;}
+
+  // Filter by period
+  var now=new Date();
+  var periodTrips=allTrips.filter(function(t){
+    if(t.status==='Cancelled') return false;
+    if(!t.trip_date) return true;
+    var d=new Date(t.trip_date);
+    if(revPeriod==='week'){
+      var weekAgo=new Date(now); weekAgo.setDate(weekAgo.getDate()-7);
+      return d>=weekAgo;
+    }
+    if(revPeriod==='month'){
+      return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+    }
+    if(revPeriod==='year'){
+      return d.getFullYear()===now.getFullYear();
+    }
+    return true; // all
+  });
+
   var total=0,collected=0;
-  allTrips.forEach(function(t){if(t.status!=='Cancelled'){total+=parseFloat(t.revenue)||0;collected+=parseFloat(t.amount_paid)||0;}});
+  periodTrips.forEach(function(t){total+=parseFloat(t.revenue)||0;collected+=parseFloat(t.amount_paid)||0;});
   var outstanding=total-collected;
   var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   setEl('rev-total',fmtMoney(total));setEl('rev-collected',fmtMoney(collected));setEl('rev-outstanding',fmtMoney(outstanding));
-  tbody.innerHTML=allTrips.filter(function(t){return t.status!=='Cancelled';}).map(function(t){
+  tbody.innerHTML=periodTrips.sort(function(a,b){return(b.trip_date||'')>(a.trip_date||'')?1:-1;}).map(function(t){
     var rev=parseFloat(t.revenue)||0,paid=parseFloat(t.amount_paid)||0,out=rev-paid;
     return '<tr>'+
       '<td><span class="t-ref">'+t.ref+'</span></td>'+
       '<td class="t-sub">'+fmtDate(t.trip_date)+'</td>'+
-      '<td class="t-sub">'+(t.service_type||'—')+'</td>'+
+      '<td class="t-sub">'+(t.truck_id||'—')+'</td>'+
+      '<td class="t-sub">'+(t.destination||'—')+'</td>'+
       '<td class="t-sub">'+(t.client||'—')+'</td>'+
       '<td><strong>'+fmtMoney(rev)+'</strong></td>'+
       '<td style="color:var(--green)">'+fmtMoney(paid)+'</td>'+
