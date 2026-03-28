@@ -363,7 +363,26 @@
             <button class="ftab" data-tf="Completed">Completed <span class="ftab-count" id="tfc-completed">0</span></button>
             <button class="ftab" data-tf="Cancelled">Cancelled <span class="ftab-count" id="tfc-cancelled">0</span></button>
           </div>
-          <input type="text" class="search-input" id="tripSearch" placeholder="🔍 Search ref, truck, driver..." />
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+            <input type="text" class="search-input" id="tripSearch" placeholder="🔍 Search destination, driver, ref..." style="width:200px" />
+            <select id="tripMonthFilter" class="search-input" style="width:140px" onchange="tripMonthFilter=this.value;renderTrips()">
+              <option value="">All Months</option>
+            </select>
+            <select id="tripTruckFilter" class="search-input" style="width:120px" onchange="tripTruckFilterVal=this.value;renderTrips()">
+              <option value="">All Trucks</option>
+              <option value="Truck 1">Truck 1</option>
+              <option value="Truck 2">Truck 2</option>
+            </select>
+            <select id="tripSortSelect" class="search-input" style="width:150px" onchange="tripSort=this.value;renderTrips()">
+              <option value="date_desc">Date (Newest First)</option>
+              <option value="date_asc">Date (Oldest First)</option>
+              <option value="dest_asc">Destination (A–Z)</option>
+              <option value="dest_desc">Destination (Z–A)</option>
+              <option value="rev_desc">Revenue (Highest)</option>
+              <option value="rev_asc">Revenue (Lowest)</option>
+              <option value="truck">Truck</option>
+            </select>
+          </div>
         </div>
         <div class="card">
           <div class="tbl-wrap">
@@ -2094,7 +2113,7 @@ function refreshData(){
 }
 
 // ══ TRIPS ══
-var tripFilter='all',tripSearch='',currentTrip=null;
+var tripFilter='all',tripSearch='',tripMonthFilter='',tripTruckFilterVal='',tripSort='date_desc',currentTrip=null;
 
 function loadTrips(){
   return sbGet('tr_trips').then(function(data){
@@ -2115,11 +2134,44 @@ function updateTripCounts(){
 }
 
 function renderTrips(){
-  var filtered=allTrips.filter(function(t){
-    var mf=tripFilter==='all'||t.status===tripFilter;
-    var q=tripSearch.toLowerCase();
-    var mq=!q||(t.ref||'').toLowerCase().includes(q)||(t.truck_id||'').toLowerCase().includes(q)||(t.driver_name||'').toLowerCase().includes(q);
-    return mf&&mq;
+  // Build month options dynamically
+  var monthSel = document.getElementById('tripMonthFilter');
+  if (monthSel) {
+    var months = {};
+    allTrips.forEach(function(t){ if(t.trip_date) months[t.trip_date.substring(0,7)] = true; });
+    var sortedMonths = Object.keys(months).sort().reverse();
+    var currentMonthVal = monthSel.value;
+    monthSel.innerHTML = '<option value="">All Months</option>' + sortedMonths.map(function(ym) {
+      var d = new Date(ym + '-01');
+      var mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return '<option value="' + ym + '"' + (ym===currentMonthVal?' selected':'') + '>' + mn[d.getMonth()] + ' ' + d.getFullYear() + '</option>';
+    }).join('');
+  }
+
+  var filtered = allTrips.filter(function(t) {
+    if (tripFilter !== 'all' && t.status !== tripFilter) return false;
+    if (tripMonthFilter && !(t.trip_date||'').startsWith(tripMonthFilter)) return false;
+    if (tripTruckFilterVal && t.truck_id !== tripTruckFilterVal) return false;
+    var q = tripSearch.toLowerCase();
+    if (q) {
+      var haystack = [(t.ref||''),(t.truck_id||''),(t.driver_name||''),(t.destination||''),(t.client||''),(t.service_type||'')].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  filtered.sort(function(a, b) {
+    switch(tripSort) {
+      case 'date_asc':  return (a.trip_date||'') > (b.trip_date||'') ? 1 : -1;
+      case 'date_desc': return (a.trip_date||'') < (b.trip_date||'') ? 1 : -1;
+      case 'dest_asc':  return (a.destination||'').localeCompare(b.destination||'');
+      case 'dest_desc': return (b.destination||'').localeCompare(a.destination||'');
+      case 'rev_desc':  return (parseFloat(b.revenue)||0) - (parseFloat(a.revenue)||0);
+      case 'rev_asc':   return (parseFloat(a.revenue)||0) - (parseFloat(b.revenue)||0);
+      case 'truck':     return (a.truck_id||'').localeCompare(b.truck_id||'');
+      default:          return (a.trip_date||'') < (b.trip_date||'') ? 1 : -1;
+    }
   });
   var tbody=document.getElementById('tripTableBody');
   var empty=document.getElementById('tripEmpty');
@@ -4490,7 +4542,7 @@ var SEED_TRIPS = [
 function seedTripsFromPayslips() {
   sbGet('tr_trips').then(function(existing) {
     // Only seed if fewer than 5 trips exist (avoid double seeding)
-    if (Array.isArray(existing) && existing.length >= 5) {
+    if (Array.isArray(existing) && existing.length >= 81) {
       console.log('Trips already seeded, skipping.');
       return;
     }
