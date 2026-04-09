@@ -254,7 +254,22 @@
     .exp-cat-amt{font-size:12px;color:var(--muted);width:80px;text-align:right}
 
     @media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}.three-col{grid-template-columns:1fr}}
-    @media(max-width:600px){.sidebar{display:none}}
+    @media(max-width:768px){
+      .sidebar{position:fixed;left:-220px;top:0;z-index:150;transition:left 0.25s ease;height:100%;box-shadow:4px 0 20px rgba(0,0,0,0.3)}
+      .sidebar.open{left:0}
+      .mobile-overlay{display:block!important}
+      .hamburger{display:flex!important}
+      .main{width:100%}
+      .content{padding:0.8rem}
+      th,td{padding:0.45rem 0.5rem;font-size:12px}
+      .filter-bar{flex-direction:column;align-items:flex-start}
+      .filter-bar > div{flex-wrap:wrap}
+      .search-input{width:100%!important}
+      .stats-grid{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:480px){
+      .stats-grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
@@ -296,7 +311,8 @@
   </div>
 
   <div class="main">
-    <div class="topbar">
+    <div class="topbar" style="gap:0.5rem">
+      <button class="hamburger" id="hamburgerBtn" style="display:none;background:none;border:none;cursor:pointer;padding:0.3rem;flex-direction:column;gap:4px;justify-content:center" onclick="toggleSidebar()"><div style="width:22px;height:2px;background:var(--navy);border-radius:2px"></div><div style="width:22px;height:2px;background:var(--navy);border-radius:2px"></div><div style="width:22px;height:2px;background:var(--navy);border-radius:2px"></div></button>
       <div class="tb-title" id="tbTitle">Overview</div>
       <div class="tb-right">
         <button class="tb-refresh" onclick="refreshData()" title="Refresh">↻</button>
@@ -817,6 +833,7 @@
   </div><!-- end main -->
 </div><!-- end app -->
 
+<div class="mobile-overlay" id="mobileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:149" onclick="toggleSidebar()"></div>
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 <script>
@@ -1886,6 +1903,26 @@ function piPrompt(msg, placeholder, onOk, onCancel) {
   input.onkeydown = function(e) { if(e.key==='Enter') doOk(); if(e.key==='Escape') wrap.querySelector('#piCancel').click(); };
 }
 
+
+// ══ MOBILE SIDEBAR ══
+function toggleSidebar() {
+  var sb = document.querySelector('.sidebar');
+  var ov = document.getElementById('mobileOverlay');
+  if (sb) sb.classList.toggle('open');
+  if (ov) ov.style.display = sb && sb.classList.contains('open') ? 'block' : 'none';
+}
+// Close sidebar when nav item clicked on mobile
+document.querySelectorAll('.nav-item').forEach(function(el) {
+  el.addEventListener('click', function() {
+    if (window.innerWidth <= 768) {
+      var sb = document.querySelector('.sidebar');
+      var ov = document.getElementById('mobileOverlay');
+      if (sb) sb.classList.remove('open');
+      if (ov) ov.style.display = 'none';
+    }
+  });
+});
+
 // ══ ROUTE SEARCH ACROSS CLIENTS ══
 window.searchRoutes = function(q) {
   var resultsEl = document.getElementById('routeSearchResults');
@@ -2044,9 +2081,10 @@ function doLogin() {
   if (u === 'admin' && p === 'pitrucking2025') {
     found = {username:'admin',name:'Admin',access:['overview','trips','fleet','staff','salary','financials','clients','settings']};
   }
-  // Check DB users
+  // Check DB users (localStorage + Supabase synced)
   if (!found) {
     var dbUsers = JSON.parse(localStorage.getItem('pi-trucking-users')||'[]');
+    if(typeof allUsers!=='undefined'&&allUsers.length) dbUsers=allUsers;
     dbUsers.forEach(function(user) { if (user.username===u && user.password===p) found=user; });
   }
   if (found) {
@@ -3017,9 +3055,22 @@ var currentUser2=null;
 var allTabs=['overview','trips','fleet','staff','salary','financials','clients','settings'];
 
 function loadUsers(){
-  var stored=JSON.parse(localStorage.getItem('pi-trucking-users')||'[]');
-  allUsers=stored;
-  renderUsers();
+  // Load from Supabase so users sync across all devices
+  sbGet('tr_settings','limit=1').then(function(data){
+    var s=(Array.isArray(data)&&data[0])?data[0]:{};
+    var stored = [];
+    try { stored = s.users_json ? JSON.parse(s.users_json) : []; } catch(e){ stored=[]; }
+    // Also merge localStorage as fallback for existing setups
+    var local = JSON.parse(localStorage.getItem('pi-trucking-users')||'[]');
+    local.forEach(function(u){
+      if(!stored.find(function(x){return x.username===u.username;})) stored.push(u);
+    });
+    allUsers = stored;
+    renderUsers();
+  }).catch(function(){
+    allUsers=JSON.parse(localStorage.getItem('pi-trucking-users')||'[]');
+    renderUsers();
+  });
 }
 function renderUsers(){
   var tbody=document.getElementById('usersTableBody');
@@ -3067,12 +3118,14 @@ window.saveUser=function(){
   if(currentUser2){allUsers=allUsers.filter(function(u){return u.username!==currentUser2.username;});}
   allUsers.push(userData);
   localStorage.setItem('pi-trucking-users',JSON.stringify(allUsers));
+  sbUpsert('tr_settings',{id:1,users_json:JSON.stringify(allUsers)}).catch(function(){});
   renderUsers();closeUserDrawer();showToast(currentUser2?'User updated ✓':'User added ✓');
 };
 window.deleteUser=function(){
   if(!currentUser2)return; piConfirm('Delete user '+currentUser2.username+'?',function(){
   allUsers=allUsers.filter(function(u){return u.username!==currentUser2.username;});
   localStorage.setItem('pi-trucking-users',JSON.stringify(allUsers));
+  sbUpsert('tr_settings',{id:1,users_json:JSON.stringify(allUsers)}).catch(function(){});
   renderUsers();closeUserDrawer();showToast('User deleted');
   });
 };
@@ -4623,6 +4676,7 @@ function initDashboard(){
     var el=document.getElementById('tbTime');if(el)el.textContent=(hh>12?hh-12:hh||12)+':'+mm+(hh>=12?' PM':' AM');
   },1000);
 
+  loadSettings();
   Promise.all([loadTrips(),loadFleet(),loadStaff(),loadExpenses(),loadRecurring()]).then(function(){
     loadOverview();
     seedDefaultFleet();
