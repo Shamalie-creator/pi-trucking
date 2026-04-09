@@ -482,6 +482,10 @@
               <div class="sf"><label>Registration Expiry</label><input id="fRegExp" type="date" /></div>
             </div>
             <div class="sf-row">
+              <div class="sf"><label>Carrier's Licence No.</label><input id="fCarrier" placeholder="e.g. CL-12345" /></div>
+              <div class="sf"><label>Carrier's Licence Expiry</label><input id="fCarrierExp" type="date" /></div>
+            </div>
+            <div class="sf-row">
               <div class="sf"><label>Current Odometer (km)</label><input id="fOdometer" type="number" placeholder="e.g. 431841" /></div>
               <div class="sf"><label>Fuel Type</label>
                 <select id="fFuel"><option value="Diesel">Diesel</option><option value="Petrol">Petrol</option><option value="CNG">CNG</option></select>
@@ -2353,7 +2357,8 @@ function renderFleet(){
     fitnessAlert =
       docAlert('Certificate of Fitness', f.fitness_expiry, 30) +
       docAlert('Insurance', f.insurance_expiry, 30) +
-      docAlert('Registration', f.reg_expiry, 30);
+      docAlert('Registration', f.reg_expiry, 30) +
+      docAlert('Carrier\'s Licence', f.carrier_expiry, 30);
     var statusColor=f.status==='Active'?'b-active':f.status==='In Shop'?'b-pending':'b-inactive';
     return '<div class="fleet-card">'+
       '<div class="fleet-card-head">'+
@@ -2367,6 +2372,7 @@ function renderFleet(){
           (f.fitness_expiry?'<div>📋 Fitness: '+fmtDate(f.fitness_expiry)+'</div>':'')+
           (f.insurance_expiry?'<div>🛡 Insurance: '+fmtDate(f.insurance_expiry)+(f.insurer?' ('+f.insurer+')':'')+'</div>':'')+
           (f.reg_expiry?'<div>📝 Registration: '+fmtDate(f.reg_expiry)+'</div>':'')+
+          (f.carrier_expiry?'<div>🚛 Carrier\'s Licence: '+fmtDate(f.carrier_expiry)+'</div>':'')+
         '</div>'+
         fitnessAlert+
         (overdueCount>0?'<div class="alert-banner error" style="padding:0.5rem 0.8rem;font-size:12px;margin-bottom:0.6rem">⚠️ '+overdueCount+' maintenance item(s) OVERDUE</div>':'')+ 
@@ -2422,6 +2428,8 @@ function openFleetDrawer(id){
   if(document.getElementById('fInsuranceExp'))document.getElementById('fInsuranceExp').value=fleet?fleet.insurance_expiry||'':'';
   if(document.getElementById('fRegNo'))document.getElementById('fRegNo').value=fleet?fleet.reg_no||'':'';
   if(document.getElementById('fRegExp'))document.getElementById('fRegExp').value=fleet?fleet.reg_expiry||'':'';
+  if(document.getElementById('fCarrier'))document.getElementById('fCarrier').value=fleet?fleet.carrier_no||'':'';
+  if(document.getElementById('fCarrierExp'))document.getElementById('fCarrierExp').value=fleet?fleet.carrier_expiry||'':'';
   if(document.getElementById('fOdometer'))document.getElementById('fOdometer').value=fleet?fleet.odometer||'':'';
   if(document.getElementById('fFuel'))document.getElementById('fFuel').value=fleet?fleet.fuel_type||'Diesel':'Diesel';
   document.getElementById('fStatus').value=fleet?fleet.status||'Active':'Active';
@@ -2478,6 +2486,8 @@ window.saveFleet=function(){
     insurance_expiry:document.getElementById('fInsuranceExp')?document.getElementById('fInsuranceExp').value:'',
     reg_no:document.getElementById('fRegNo')?document.getElementById('fRegNo').value.trim():'',
     reg_expiry:document.getElementById('fRegExp')?document.getElementById('fRegExp').value:'',
+    carrier_no:document.getElementById('fCarrier')?document.getElementById('fCarrier').value.trim():'',
+    carrier_expiry:document.getElementById('fCarrierExp')?document.getElementById('fCarrierExp').value:'',
     odometer:document.getElementById('fOdometer')?parseFloat(document.getElementById('fOdometer').value)||0:0,
     fuel_type:document.getElementById('fFuel')?document.getElementById('fFuel').value:'Diesel',
     status:document.getElementById('fStatus').value,
@@ -3181,6 +3191,7 @@ function loadOverview(){
       docOvAlert('Certificate of Fitness', f.fitness_expiry);
       docOvAlert('Insurance', f.insurance_expiry);
       docOvAlert('Registration', f.reg_expiry);
+      docOvAlert('Carrier\'s Licence', f.carrier_expiry);
     });
     allRecurring.forEach(function(r){
       var dueDay=parseInt(r.due_day)||1;
@@ -4669,7 +4680,10 @@ function initDashboard(){
   if(el)el.textContent=days[now.getDay()]+', '+months[now.getMonth()]+' '+now.getDate()+', '+now.getFullYear();
   var h=now.getHours();
   var greet=document.getElementById('ovGreeting');
-  if(greet)greet.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', Admin 👋';
+  var greetName = currentUser ? currentUser.name : 'Admin';
+  // Use first name only
+  var firstName = greetName.split(' ')[0];
+  if(greet)greet.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+' 👋';
 
   setInterval(function(){
     var n=new Date();var hh=n.getHours();var mm=String(n.getMinutes()).padStart(2,'0');
