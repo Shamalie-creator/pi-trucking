@@ -640,26 +640,61 @@
 
         <!-- EXPENSES -->
         <div class="fin-section" id="fin-expenses">
-          <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.6rem">
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+              <select id="expViewMode" class="search-input" style="width:160px" onchange="renderExpenses()">
+                <option value="all">All Expenses</option>
+                <option value="by_truck">By Truck</option>
+                <option value="by_month">By Month</option>
+              </select>
+              <select id="expFilterTruck" class="search-input" style="width:130px" onchange="renderExpenses()">
+                <option value="">All Trucks</option>
+              </select>
+              <select id="expFilterMonth" class="search-input" style="width:140px" onchange="renderExpenses()">
+                <option value="">All Months</option>
+              </select>
+            </div>
             <button class="btn-primary" onclick="openExpenseDrawer(null)">+ Add Expense</button>
           </div>
+
+          <!-- Consolidated stats row -->
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1rem">
+            <div class="stat-card urgent">
+              <div class="stat-top"><span class="stat-icon">📤</span><div class="stat-num" id="exp-total">—</div></div>
+              <div class="stat-lbl">Total Expenses</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-top"><span class="stat-icon">⛽</span><div class="stat-num" id="exp-fuel">—</div></div>
+              <div class="stat-lbl">Fuel</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-top"><span class="stat-icon">🔧</span><div class="stat-num" id="exp-maint">—</div></div>
+              <div class="stat-lbl">Maintenance</div>
+            </div>
+          </div>
+
+          <!-- By Category bar chart + By Truck side by side -->
           <div class="two-col" style="margin-bottom:1rem">
             <div class="card">
               <div class="card-header"><div class="card-title">By Category</div></div>
               <div class="card-body" id="expCatChart"><div class="loading"><span class="spinner"></span>Loading...</div></div>
             </div>
             <div class="card">
-              <div class="card-header"><div class="card-title">Summary</div></div>
-              <div class="card-body">
-                <div class="drw-row"><span class="drw-lbl">Total Expenses</span><span class="drw-val" id="exp-total">—</span></div>
-                <div class="drw-row"><span class="drw-lbl">Fuel</span><span class="drw-val" id="exp-fuel">—</span></div>
-                <div class="drw-row"><span class="drw-lbl">Maintenance</span><span class="drw-val" id="exp-maint">—</span></div>
-                <div class="drw-row"><span class="drw-lbl">Staff Salaries</span><span class="drw-val" id="exp-salary">—</span></div>
-                <div class="drw-row"><span class="drw-lbl">Tax</span><span class="drw-val" id="exp-tax">—</span></div>
-                <div class="drw-row"><span class="drw-lbl">Other</span><span class="drw-val" id="exp-other">—</span></div>
-              </div>
+              <div class="card-header"><div class="card-title">By Truck</div></div>
+              <div class="card-body" id="expTruckChart"><div class="loading"><span class="spinner"></span>Loading...</div></div>
             </div>
           </div>
+
+          <!-- By Month breakdown -->
+          <div class="card" style="margin-bottom:1rem">
+            <div class="card-header"><div class="card-title">By Month & Category</div></div>
+            <div class="tbl-wrap" id="expMonthTable">
+              <table><thead><tr><th>Month</th><th>Fuel</th><th>Maintenance</th><th>Salary</th><th>Tax</th><th>Insurance</th><th>Other</th><th>Total</th></tr></thead>
+              <tbody id="expMonthBody"><tr><td colspan="8" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table>
+            </div>
+          </div>
+
+          <!-- Expense Log -->
           <div class="card">
             <div class="card-header"><div class="card-title">Expense Log</div></div>
             <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Truck</th><th>Amount</th><th>Actions</th></tr></thead>
@@ -2679,40 +2714,147 @@ function loadExpenses(){
 }
 
 function renderExpenses(){
-  var tbody=document.getElementById('expTableBody');
-  if(!tbody)return;
-  if(allExpenses.length===0){tbody.innerHTML='<tr><td colspan="6" class="empty-state">No expenses logged yet.</td></tr>';return;}
-  tbody.innerHTML=allExpenses.map(function(e){
-    return '<tr><td class="t-sub">'+fmtDate(e.trip_date||e.created_at)+'</td>'+
-      '<td><span class="badge b-pending">'+e.category+'</span></td>'+
-      '<td>'+e.description+'</td>'+
-      '<td class="t-sub">'+(e.truck_id||'—')+'</td>'+
-      '<td><strong>'+fmtMoney(e.amount)+'</strong></td>'+
-      '<td><button class="btn-sm blue" data-exp-id="'+e.id+'">Edit</button></td>'+
-    '</tr>';
-  }).join('');
-  tbody.querySelectorAll('[data-exp-id]').forEach(function(btn){btn.onclick=function(){openExpenseDrawer(btn.dataset.expId);};});
+  var MN2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Category chart
+  // Build truck and month filter dropdowns
+  var truckSel = document.getElementById('expFilterTruck');
+  var monSel   = document.getElementById('expFilterMonth');
+  if(truckSel) {
+    var curTruck = truckSel.value;
+    truckSel.innerHTML = '<option value="">All Trucks</option>' +
+      allFleet.map(function(f){return '<option value="'+f.truck_id+'"'+(f.truck_id===curTruck?' selected':'')+'>'+f.truck_id+'</option>';}).join('') +
+      '<option value="General"'+(curTruck==='General'?' selected':'')+'>General</option>';
+  }
+  if(monSel) {
+    var curMon = monSel.value;
+    var expMonths = {};
+    allExpenses.forEach(function(e){ var d=e.trip_date||e.created_at; if(d) expMonths[d.substring(0,7)]=true; });
+    var sortedMonths2 = Object.keys(expMonths).sort().reverse();
+    monSel.innerHTML = '<option value="">All Months</option>' +
+      sortedMonths2.map(function(ym){
+        var parts=ym.split('-'); var lbl=MN2[parseInt(parts[1])-1]+' '+parts[0];
+        return '<option value="'+ym+'"'+(ym===curMon?' selected':'')+'>'+lbl+'</option>';
+      }).join('');
+  }
+
+  // Get filter values
+  var filterTruck = truckSel ? truckSel.value : '';
+  var filterMon   = monSel   ? monSel.value   : '';
+
+  // Filter expenses
+  var filtered = allExpenses.filter(function(e){
+    if(filterTruck) {
+      var et = e.truck_id||'General';
+      if(filterTruck==='General') { if(et&&et!=='General'&&et!=='') return false; }
+      else { if(et!==filterTruck) return false; }
+    }
+    if(filterMon) { var d=e.trip_date||e.created_at; if(!d||!d.startsWith(filterMon)) return false; }
+    return true;
+  });
+
+  // Expense log table
+  var tbody=document.getElementById('expTableBody');
+  if(tbody){
+    if(filtered.length===0){tbody.innerHTML='<tr><td colspan="6" class="empty-state">No expenses found.</td></tr>';}
+    else {
+      tbody.innerHTML=filtered.sort(function(a,b){
+        var da=a.trip_date||a.created_at||''; var db=b.trip_date||b.created_at||'';
+        return db>da?1:-1;
+      }).map(function(e){
+        return '<tr><td class="t-sub">'+fmtDate(e.trip_date||e.created_at)+'</td>'+
+          '<td><span class="badge b-pending">'+e.category+'</span></td>'+
+          '<td>'+(e.description||'—')+'</td>'+
+          '<td class="t-sub">'+(e.truck_id||'General')+'</td>'+
+          '<td><strong>'+fmtMoney(e.amount)+'</strong></td>'+
+          '<td><button class="btn-sm blue" data-exp-id="'+e.id+'">Edit</button></td>'+
+        '</tr>';
+      }).join('');
+      tbody.querySelectorAll('[data-exp-id]').forEach(function(btn){btn.onclick=function(){openExpenseDrawer(btn.dataset.expId);};});
+    }
+  }
+
+  // By Category chart (filtered)
   var cats={};
-  allExpenses.forEach(function(e){cats[e.category]=(cats[e.category]||0)+e.amount;});
+  filtered.forEach(function(e){cats[e.category]=(cats[e.category]||0)+(parseFloat(e.amount)||0);});
   var total=Object.values(cats).reduce(function(a,b){return a+b;},0);
   var sorted=Object.entries(cats).sort(function(a,b){return b[1]-a[1];});
   var chart=document.getElementById('expCatChart');
   if(chart){
-    chart.innerHTML=sorted.map(function(entry){
+    chart.innerHTML=sorted.length===0?'<div class="t-sub">No data</div>':sorted.map(function(entry){
       var pct=total>0?Math.round(entry[1]/total*100):0;
-      return '<div class="exp-cat-bar"><div class="exp-cat-label">'+entry[0]+'</div><div class="exp-cat-track"><div class="exp-cat-fill" style="width:'+pct+'%"></div></div><div class="exp-cat-amt">JMD '+Math.round(entry[1]/1000)+'k</div></div>';
-    }).join('')||'<div class="t-sub">No data</div>';
+      return '<div class="exp-cat-bar">'+
+        '<div class="exp-cat-label">'+entry[0]+'</div>'+
+        '<div class="exp-cat-track"><div class="exp-cat-fill" style="width:'+pct+'%"></div></div>'+
+        '<div class="exp-cat-amt">'+fmtMoney(entry[1])+'</div>'+
+      '</div>';
+    }).join('');
   }
-  // Summary
-  var catMap={Fuel:'exp-fuel',Maintenance:'exp-maint',Salary:'exp-salary',Tax:'exp-tax'};
-  Object.keys(catMap).forEach(function(cat){var el=document.getElementById(catMap[cat]);if(el)el.textContent=fmtMoney(cats[cat]||0);});
-  var otherTotal=Object.entries(cats).filter(function(e){return!Object.keys(catMap).includes(e[0]);}).reduce(function(a,e){return a+e[1];},0);
-  var otherEl=document.getElementById('exp-other');if(otherEl)otherEl.textContent=fmtMoney(otherTotal);
-  var totalEl=document.getElementById('exp-total');if(totalEl)totalEl.textContent=fmtMoney(total);
 
-  // Truck selector in drawer
+  // By Truck chart (always uses all expenses, no filter)
+  var truckTotals={};
+  allExpenses.forEach(function(e){
+    var tk=e.truck_id||'General';
+    truckTotals[tk]=(truckTotals[tk]||0)+(parseFloat(e.amount)||0);
+  });
+  var truckTotal=Object.values(truckTotals).reduce(function(a,b){return a+b;},0);
+  var truckChart=document.getElementById('expTruckChart');
+  if(truckChart){
+    var truckEntries=Object.entries(truckTotals).sort(function(a,b){return b[1]-a[1];});
+    truckChart.innerHTML=truckEntries.length===0?'<div class="t-sub">No data</div>':truckEntries.map(function(entry){
+      var pct=truckTotal>0?Math.round(entry[1]/truckTotal*100):0;
+      return '<div class="exp-cat-bar">'+
+        '<div class="exp-cat-label" style="width:80px">'+entry[0]+'</div>'+
+        '<div class="exp-cat-track"><div class="exp-cat-fill" style="width:'+pct+'%;background:var(--gold)"></div></div>'+
+        '<div class="exp-cat-amt">'+fmtMoney(entry[1])+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  // By Month & Category table (all expenses, no filter)
+  var monthCatMap={};
+  var allCats=[];
+  allExpenses.forEach(function(e){
+    var d=e.trip_date||e.created_at; if(!d) return;
+    var ym=d.substring(0,7);
+    if(!monthCatMap[ym]) monthCatMap[ym]={};
+    var cat=e.category||'Other';
+    monthCatMap[ym][cat]=(monthCatMap[ym][cat]||0)+(parseFloat(e.amount)||0);
+    if(!allCats.includes(cat)) allCats.push(cat);
+  });
+  var fixedCats=['Fuel','Maintenance','Salary','Tax','Insurance'];
+  var otherCats=allCats.filter(function(c){return !fixedCats.includes(c);});
+  var monthBody=document.getElementById('expMonthBody');
+  if(monthBody){
+    var monthKeys=Object.keys(monthCatMap).sort().reverse();
+    if(monthKeys.length===0){monthBody.innerHTML='<tr><td colspan="8" class="empty-state">No data yet.</td></tr>';}
+    else {
+      monthBody.innerHTML=monthKeys.map(function(ym){
+        var parts=ym.split('-');
+        var lbl=MN2[parseInt(parts[1])-1]+' '+parts[0];
+        var row=monthCatMap[ym];
+        var rowTotal=Object.values(row).reduce(function(a,b){return a+b;},0);
+        var otherSum=otherCats.reduce(function(a,cat){return a+(row[cat]||0);},0);
+        return '<tr>'+
+          '<td><strong>'+lbl+'</strong></td>'+
+          '<td>'+fmtMoney(row['Fuel']||0)+'</td>'+
+          '<td>'+fmtMoney(row['Maintenance']||0)+'</td>'+
+          '<td>'+fmtMoney(row['Salary']||0)+'</td>'+
+          '<td>'+fmtMoney(row['Tax']||0)+'</td>'+
+          '<td>'+fmtMoney(row['Insurance']||0)+'</td>'+
+          '<td>'+fmtMoney(otherSum)+'</td>'+
+          '<td><strong style="color:var(--red)">'+fmtMoney(rowTotal)+'</strong></td>'+
+        '</tr>';
+      }).join('');
+    }
+  }
+
+  // Top stat cards
+  var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('exp-total',fmtMoney(total));
+  setEl('exp-fuel',fmtMoney(cats['Fuel']||0));
+  setEl('exp-maint',fmtMoney(cats['Maintenance']||0));
+
+  // Truck selector in expense drawer
   var expTruckSel=document.getElementById('expTruck');
   if(expTruckSel){expTruckSel.innerHTML='<option value="">All / General</option>'+allFleet.map(function(f){return '<option value="'+f.truck_id+'">'+f.truck_id+'</option>';}).join('');}
 }
@@ -2903,6 +3045,10 @@ function renderSummary(){
   var monthMap={};
   allTrips.forEach(function(t){if(!t.trip_date||t.status==='Cancelled')return;var ym=t.trip_date.substring(0,7);if(!monthMap[ym])monthMap[ym]={rev:0,exp:0};monthMap[ym].rev+=parseFloat(t.revenue)||0;});
   allExpenses.forEach(function(e){var d=e.trip_date||e.created_at;if(!d)return;var ym=d.substring(0,7);if(!monthMap[ym])monthMap[ym]={rev:0,exp:0};monthMap[ym].exp+=parseFloat(e.amount)||0;});
+  // Remove any months that have zero revenue AND zero expenses (avoids ghost months)
+  Object.keys(monthMap).forEach(function(ym){
+    if(monthMap[ym].rev===0&&monthMap[ym].exp===0) delete monthMap[ym];
+  });
   var months=Object.keys(monthMap).sort().reverse();
   if(months.length===0){tbody.innerHTML='<tr><td colspan="5" class="empty-state">No data yet.</td></tr>';return;}
   var totalRev=0,totalExp=0;
