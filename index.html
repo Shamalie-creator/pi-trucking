@@ -1962,6 +1962,23 @@ document.querySelectorAll('.nav-item').forEach(function(el) {
   });
 });
 
+
+// Safe date parser — avoids timezone shift for YYYY-MM-DD strings
+function parseDate(str) {
+  if (!str) return null;
+  var s = str.split('T')[0]; // strip time if present
+  var p = s.split('-');
+  if (p.length === 3) return new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+  return new Date(str);
+}
+// Safe year/month extractor — returns {y, m} where m is 1-indexed
+function dateYM(str) {
+  if (!str) return null;
+  var s = str.split('T')[0].split('-');
+  if (s.length >= 2) return {y: parseInt(s[0]), m: parseInt(s[1])};
+  return null;
+}
+
 // ══ ROUTE SEARCH ACROSS CLIENTS ══
 window.searchRoutes = function(q) {
   var resultsEl = document.getElementById('routeSearchResults');
@@ -2873,7 +2890,7 @@ function openExpenseDrawer(id){
   try{document.getElementById('expDrawer').classList.add('open');}catch(e){}
 }
 window.saveExpense=function(){
-  var data={trip_date:document.getElementById('expDate').value,category:document.getElementById('expCat').value,description:document.getElementById('expDesc').value.trim(),truck_id:document.getElementById('expTruck').value,amount:parseFloat(document.getElementById('expAmt').value)||0};
+  var expDateVal=document.getElementById('expDate').value||new Date().toLocaleDateString('en-CA');var data={trip_date:expDateVal,category:document.getElementById('expCat').value,description:document.getElementById('expDesc').value.trim(),truck_id:document.getElementById('expTruck').value,amount:parseFloat(document.getElementById('expAmt').value)||0};
   var existingId=document.getElementById('expId').value;
   var p=existingId?sbUpdate('tr_expenses',existingId,data):sbPost('tr_expenses',data);
   p.then(function(result){
@@ -2995,27 +3012,30 @@ function renderFinancials(){
 }
 
 function renderRevenue(){
-  var tbody=document.getElementById('revTableBody');
-  if(!tbody)return;
-  if(allTrips.length===0){tbody.innerHTML='<tr><td colspan="9" class="empty-state">No trips logged yet.</td></tr>';return;}
-
-  // Filter by period
+  var container=document.getElementById('revMonthGroups');
+  if(!container)return;
+  var MNR=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var now=new Date();
+
+  // Truck filter
+  var rtSel=document.getElementById('revTruckFilter');
+  if(rtSel&&allFleet.length>0){
+    var rtCur=rtSel.value;
+    rtSel.innerHTML='<option value="">All Trucks</option>'+allFleet.map(function(f){return '<option value="'+f.truck_id+'"'+(f.truck_id===rtCur?' selected':'')+'>'+f.truck_id+'</option>';}).join('');
+  }
+  var rtFilter=rtSel?rtSel.value:'';
+
+  // Filter by period + truck
   var periodTrips=allTrips.filter(function(t){
     if(t.status==='Cancelled') return false;
+    if(rtFilter&&t.truck_id!==rtFilter) return false;
     if(!t.trip_date) return true;
-    var d=new Date(t.trip_date);
-    if(revPeriod==='week'){
-      var weekAgo=new Date(now); weekAgo.setDate(weekAgo.getDate()-7);
-      return d>=weekAgo;
-    }
-    if(revPeriod==='month'){
-      return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
-    }
-    if(revPeriod==='year'){
-      return d.getFullYear()===now.getFullYear();
-    }
-    return true; // all
+    var ym=dateYM(t.trip_date);
+    if(!ym) return true;
+    if(revPeriod==='week'){var d2=parseDate(t.trip_date);var wk=new Date(now);wk.setDate(wk.getDate()-7);return d2>=wk;}
+    if(revPeriod==='month'){return ym.y===now.getFullYear()&&ym.m===now.getMonth()+1;}
+    if(revPeriod==='year'){return ym.y===now.getFullYear();}
+    return true;
   });
 
   var total=0,collected=0;
@@ -3023,20 +3043,105 @@ function renderRevenue(){
   var outstanding=total-collected;
   var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   setEl('rev-total',fmtMoney(total));setEl('rev-collected',fmtMoney(collected));setEl('rev-outstanding',fmtMoney(outstanding));
-  tbody.innerHTML=periodTrips.sort(function(a,b){return(b.trip_date||'')>(a.trip_date||'')?1:-1;}).map(function(t){
-    var rev=parseFloat(t.revenue)||0,paid=parseFloat(t.amount_paid)||0,out=rev-paid;
-    return '<tr>'+
-      '<td><span class="t-ref">'+t.ref+'</span></td>'+
-      '<td class="t-sub">'+fmtDate(t.trip_date)+'</td>'+
-      '<td class="t-sub">'+(t.truck_id||'—')+'</td>'+
-      '<td class="t-sub">'+(t.destination||'—')+'</td>'+
-      '<td class="t-sub">'+(t.client||'—')+'</td>'+
-      '<td><strong>'+fmtMoney(rev)+'</strong></td>'+
-      '<td style="color:var(--green)">'+fmtMoney(paid)+'</td>'+
-      '<td style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtMoney(out)+'</td>'+
-      '<td class="t-sub">'+(t.payment_method||'—')+'</td>'+
-    '</tr>';
+
+  if(periodTrips.length===0){container.innerHTML='<div class="empty-state">No revenue data for this period.</div>';return;}
+
+  // Group by year then month
+  var grouped={};
+  periodTrips.forEach(function(t){
+    var p=t.trip_date?t.trip_date.split('-'):['0000','00'];
+    var yr=p[0]; var mo=p[1];
+    if(!grouped[yr]) grouped[yr]={};
+    if(!grouped[yr][mo]) grouped[yr][mo]=[];
+    grouped[yr][mo].push(t);
+  });
+
+  var years=Object.keys(grouped).sort().reverse();
+  container.innerHTML=years.map(function(yr){
+    var months=Object.keys(grouped[yr]).sort().reverse();
+    var yrTotal=0;
+    months.forEach(function(mo){grouped[yr][mo].forEach(function(t){yrTotal+=parseFloat(t.revenue)||0;});});
+    return '<div class="card" style="margin-bottom:1rem">'+
+      '<div class="card-header rev-yr-hdr" style="cursor:pointer;user-select:none" data-yr="'+yr+'">'+
+        '<div class="card-title">'+yr+' <span style="font-size:12px;font-weight:400;color:var(--muted);margin-left:0.5rem">'+months.length+' month'+(months.length!==1?'s':'')+' · '+fmtMoney(yrTotal)+'</span></div>'+
+        '<span class="rev-yr-arrow" style="color:var(--muted);font-size:12px">▼</span>'+
+      '</div>'+
+      '<div id="yr-'+yr+'">'+
+        months.map(function(mo){
+          var trips=grouped[yr][mo].sort(function(a,b){return(b.trip_date||'')>(a.trip_date||'')?1:-1;});
+          var moTotal=trips.reduce(function(a,t){return a+(parseFloat(t.revenue)||0);},0);
+          var moCollected=trips.reduce(function(a,t){return a+(parseFloat(t.amount_paid)||0);},0);
+          var moId='mo-'+yr+'-'+mo;
+          return '<div style="border-top:1px solid var(--border)">'+
+            '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1.2rem;cursor:pointer;background:var(--bg)" class="rev-mo-hdr" data-mo="'+moId+'">'+
+              '<div style="font-size:13px;font-weight:600;color:var(--text)">'+MNR[parseInt(mo)-1]+' '+yr+'</div>'+
+              '<div style="display:flex;align-items:center;gap:1rem">'+
+                '<span style="font-size:12px;color:var(--muted)">'+trips.length+' trip'+(trips.length!==1?'s':'')+'</span>'+
+                '<span style="font-size:13px;font-weight:600;color:var(--green)">'+fmtMoney(moTotal)+'</span>'+
+                '<span style="font-size:12px;color:var(--muted)" id="'+moId+'-arrow'+'">▶</span>'+
+              '</div>'+
+            '</div>'+
+            '<div id="'+moId+'" style="display:none">'+
+              '<div class="tbl-wrap"><table><thead><tr>'+
+                '<th>Ref</th><th>Date</th><th>Truck</th><th>Destination</th><th>Client</th><th>Amount (JMD)</th><th>Paid (JMD)</th><th>Outstanding (JMD)</th><th>Method</th>'+
+              '</tr></thead><tbody>'+
+              trips.map(function(t){
+                var rev=parseFloat(t.revenue)||0,paid=parseFloat(t.amount_paid)||0,out=rev-paid;
+                return '<tr>'+
+                  '<td><span class="t-ref">'+t.ref+'</span></td>'+
+                  '<td class="t-sub">'+fmtDate(t.trip_date)+'</td>'+
+                  '<td class="t-sub">'+(t.truck_id||'—')+'</td>'+
+                  '<td class="t-sub">'+(t.destination||'—')+'</td>'+
+                  '<td class="t-sub">'+(t.client||'—')+'</td>'+
+                  '<td><strong>'+fmtMoney(rev)+'</strong></td>'+
+                  '<td style="color:var(--green)">'+fmtMoney(paid)+'</td>'+
+                  '<td style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtMoney(out)+'</td>'+
+                  '<td class="t-sub">'+(t.payment_method||'—')+'</td>'+
+                '</tr>';
+              }).join('')+
+              '</tbody></table></div>'+
+              '<div style="display:flex;justify-content:flex-end;gap:2rem;padding:0.6rem 1.2rem;background:var(--bg);border-top:1px solid var(--border);font-size:13px">'+
+                '<span>Total: <strong>'+fmtMoney(moTotal)+'</strong></span>'+
+                '<span style="color:var(--green)">Collected: <strong>'+fmtMoney(moCollected)+'</strong></span>'+
+                '<span style="color:var(--red)">Outstanding: <strong>'+fmtMoney(moTotal-moCollected)+'</strong></span>'+
+              '</div>'+
+            '</div>'+
+          '</div>';
+        }).join('')+
+      '</div>'+
+    '</div>';
   }).join('');
+}
+
+function toggleRevYear(yr){
+  var el=document.getElementById('yr-'+yr);
+  if(!el)return;
+  var open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  // find the arrow span in the header
+  var header=el.previousElementSibling;
+  if(header){var arrow=header.querySelector('.rev-yr-arrow');if(arrow)arrow.textContent=open?'▶':'▼';}
+}
+// Revenue month toggle delegation
+document.addEventListener('click', function(e){
+  var hdr = e.target.closest('.rev-mo-hdr');
+  if(!hdr) return;
+  var mo = hdr.getAttribute('data-mo');
+  if(!mo) return;
+  var el=document.getElementById(mo);
+  if(!el)return;
+  var open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  var arrow=hdr.querySelector('.rev-mo-arrow');
+  if(arrow)arrow.textContent=open?'▶':'▼';
+});
+function toggleRevMonth(id,arrowId){
+  var el=document.getElementById(id);
+  var arrow=document.getElementById(arrowId);
+  if(!el)return;
+  var open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  if(arrow)arrow.textContent=open?'▶':'▼';
 }
 
 function renderSummary(){
